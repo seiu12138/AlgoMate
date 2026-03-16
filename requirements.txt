@@ -1,0 +1,22 @@
+# AlgoMate 项目依赖
+
+# LangChain 生态
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langgraph>=0.1.0
+
+# 向量数据库
+chromadb>=0.4.0
+
+# Web 界面
+streamlit>=1.30.0
+
+# 嵌入模型
+# dashscope for Tongyi embeddings
+
+# 可选：Docker 沙箱
+# docker>=6.0.0
+
+# 开发工具
+pytest>=7.0.0

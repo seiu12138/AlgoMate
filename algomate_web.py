@@ -4,22 +4,7 @@
 # @Time     : 2026/3/16
 # @File     : algomate_web.py
 # @Project  : AlgoMate
-"""
-AlgoMate Web 界面
-
-支持两种模式：
-1. RAG 模式：基于知识库回答问题（原有功能）
-2. Agent 模式：ReAct 智能体自动求解算法题（新增）
-
-功能特性：
-- 模式切换
-- 流式输出展示
-- 代码高亮
-- 执行过程可视化
-"""
-
 import streamlit as st
-import json
 
 import config.config_data as config
 from rag.rag import RagService
@@ -33,8 +18,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ============ 初始化 Session State ============
-
+### streamlit环境初始化
 def init_session():
     """初始化 session state"""
     if "message" not in st.session_state:
@@ -44,7 +28,6 @@ def init_session():
         st.session_state["rag"] = RagService()
     
     if "agent" not in st.session_state:
-        # Agent 延迟初始化（按需）
         st.session_state["agent"] = None
     
     if "mode" not in st.session_state:
@@ -55,8 +38,7 @@ def init_session():
 
 init_session()
 
-# ============ 侧边栏 ============
-
+### streamlit侧边栏实现
 with st.sidebar:
     st.title("🤖 AlgoMate")
     st.markdown("智能算法学习与解题助手")
@@ -73,9 +55,7 @@ with st.sidebar:
         """
     )
     st.session_state["mode"] = mode
-    
-    st.divider()
-    
+
     # Agent 配置
     if mode == "Agent 解题模式":
         st.subheader("Agent 配置")
@@ -93,19 +73,25 @@ with st.sidebar:
         language = "python"
         max_iter = 5
     
-    st.divider()
+
     
     # 清空对话
     if st.button("🗑️ 清空对话", use_container_width=True):
         st.session_state["message"] = []
         st.session_state["agent_results"] = {}
         st.rerun()
-    
-    st.divider()
+
+    st.markdown("""
+        <style>
+        [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+            min-height: 90vh;
+            justify-content: space-between;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     st.caption("Powered by LangChain + LangGraph")
 
-# ============ 主界面 ============
-
+### 主界面
 st.title("AlgoMate" if st.session_state["mode"] == "RAG 问答模式" else "AlgoMate Agent")
 st.caption("📝 知识问答" if st.session_state["mode"] == "RAG 问答模式" else "🤖 自动解题")
 st.divider()
@@ -162,8 +148,8 @@ for message in st.session_state["message"]:
                         if h.get("fixes"):
                             st.caption(f"修复: {h['fixes']}")
 
-# ============ 输入处理 ============
 
+# 输入栏Placeholder
 prompt = st.chat_input("输入你的问题..." if st.session_state["mode"] == "RAG 问答模式" else "描述你的算法题目...")
 
 if prompt:
@@ -199,7 +185,6 @@ if prompt:
         
         else:
             # ============ Agent 模式 ============
-            
             # 初始化 Agent
             if st.session_state["agent"] is None:
                 with st.spinner("🚀 初始化 Agent..."):
@@ -286,8 +271,7 @@ if prompt:
                 import traceback
                 st.code(traceback.format_exc())
 
-# ============ 底部说明 ============
-
+### 底部栏
 st.divider()
 if st.session_state["mode"] == "RAG 问答模式":
     st.caption("💡 提示：在知识库上传算法相关文档，我可以基于这些知识回答问题")

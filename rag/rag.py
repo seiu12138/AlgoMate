@@ -13,8 +13,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory, RunnableLambda
 
-from rag.file_history_store import get_history
-from vector_stores import VectorStoreService
+from .file_history_store import get_history
+from .vector_stores import VectorStoreService
 
 import config.config_data as config
 
