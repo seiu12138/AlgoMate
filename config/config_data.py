@@ -24,3 +24,6 @@ max_search_key = 2
 # 模型相关配置
 embedding_model_name = "text-embedding-v4"
 chat_model_name = "qwen3-max"
+
+# 记忆历史相关
+history_path = "./data/chat_history"
