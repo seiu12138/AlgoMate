@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Author   : PR
+# @Time     : 2026/3/16 16:02
+# @File     : config_data.py
+# @Project  : AlgoMate
+
+# md5文件存储路径
+md5_path = "./data/md5.text"
+
+# chroma数据库存储路径
+collection_name = "algomate"
+persist_directory = "./data/chromd_db"
+
+# splitter相关配置
+chunk_size = 1000
+chunk_overlap = 100
+separators = ["\n\n", "\n", ".", "!", "?", "。", "？", "！", " ", ""]
+max_split_char_number = 1000
