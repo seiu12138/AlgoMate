@@ -27,3 +27,10 @@ chat_model_name = "qwen3-max"
 
 # 记忆历史相关
 history_path = "./data/chat_history"
+
+# 用户配置
+session_config = {
+    "configurable": {
+        "session_id": "user_001"
+    }
+}
