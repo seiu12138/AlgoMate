@@ -204,7 +204,7 @@ class AgentNodes:
             output_lines = result.stdout.strip().split("\n")
             for i, line in enumerate(output_lines):
                 if i < len(test_cases) and ":" in line:
-                    passed = "✅" in line or "成功" in line or "passed" in line.lower()
+                    passed = "[成功]" in line or "成功" in line or "passed" in line.lower()
                     test_cases[i]["passed"] = passed
         
         log_node("execute_code", f"代码执行完成，成功: {result.success}, 错误: {result.error_type or '无'}")

@@ -83,7 +83,7 @@ while True:
     print(f"成功: {result.success}")
     print(f"错误类型: {result.error_type}")
     
-    print("\n✅ 代码执行器测试完成")
+    print("\n[成功] 代码执行器测试完成")
 
 
 def test_react_agent():
@@ -124,10 +124,10 @@ def test_react_agent():
         print("\n--- 是否解决 ---")
         print(f"is_solved: {result.get('is_solved', False)}")
         
-        print("\n✅ ReAct Agent 测试完成")
+        print("\n[成功] ReAct Agent 测试完成")
         
     except Exception as e:
-        print(f"❌ Agent 测试失败: {e}")
+        print(f"[失败] Agent 测试失败: {e}")
         import traceback
         traceback.print_exc()
 
@@ -149,44 +149,44 @@ def check_dependencies():
     try:
         import langchain
         dependencies["langchain"] = True
-        print("✅ langchain")
+        print("[成功] langchain")
     except:
-        print("❌ langchain - pip install langchain")
+        print("[失败] langchain - pip install langchain")
     
     try:
         import langchain_core
         dependencies["langchain-core"] = True
-        print("✅ langchain-core")
+        print("[成功] langchain-core")
     except:
-        print("❌ langchain-core - pip install langchain-core")
+        print("[失败] langchain-core - pip install langchain-core")
     
     try:
         import langgraph
         dependencies["langgraph"] = True
-        print("✅ langgraph")
+        print("[成功] langgraph")
     except:
-        print("❌ langgraph - pip install langgraph")
+        print("[失败] langgraph - pip install langgraph")
     
     try:
         import streamlit
         dependencies["streamlit"] = True
-        print("✅ streamlit")
+        print("[成功] streamlit")
     except:
-        print("❌ streamlit - pip install streamlit")
+        print("[失败] streamlit - pip install streamlit")
     
     try:
         import chromadb
         dependencies["chromadb"] = True
-        print("✅ chromadb")
+        print("[成功] chromadb")
     except:
-        print("❌ chromadb - pip install chromadb")
+        print("[失败] chromadb - pip install chromadb")
     
     # 可选依赖
     try:
         import docker
-        print("✅ docker (可选)")
+        print("[成功] docker (可选)")
     except:
-        print("⚠️ docker (可选) - pip install docker，用于更安全的代码执行")
+        print("[警告] docker (可选) - pip install docker，用于更安全的代码执行")
     
     return all(dependencies.values())
 
@@ -200,7 +200,7 @@ def main():
     # 检查依赖
     deps_ok = check_dependencies()
     if not deps_ok:
-        print("\n⚠️ 部分依赖缺失，请安装:")
+        print("\n[警告] 部分依赖缺失，请安装:")
         print("pip install langchain langchain-core langgraph streamlit chromadb")
         return
     
@@ -208,7 +208,7 @@ def main():
     try:
         test_code_executor()
     except Exception as e:
-        print(f"\n❌ 代码执行器测试失败: {e}")
+        print(f"\n[失败] 代码执行器测试失败: {e}")
         import traceback
         traceback.print_exc()
     
@@ -216,7 +216,7 @@ def main():
     try:
         test_react_agent()
     except Exception as e:
-        print(f"\n❌ ReAct Agent 测试失败: {e}")
+        print(f"\n[失败] ReAct Agent 测试失败: {e}")
         import traceback
         traceback.print_exc()
     

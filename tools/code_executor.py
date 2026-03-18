@@ -44,7 +44,7 @@ class ExecutionResult:
         }
     
     def __str__(self) -> str:
-        status = "✅ 成功" if self.success else "❌ 失败"
+        status = "[成功] 成功" if self.success else "[失败] 失败"
         return f"""
         执行结果: {status}
         退出码: {self.exit_code}
@@ -229,9 +229,9 @@ class SubprocessSandbox:
                 passed = stdout.strip() == expected.strip() if expected else exit_code == 0
                 if not passed:
                     all_passed = False
-                    results.append(f"用例 {i+1}: ❌\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
+                    results.append(f"用例 {i+1}: [失败]\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
                 else:
-                    results.append(f"用例 {i+1}: ✅")
+                    results.append(f"用例 {i+1}: [成功]")
             
             exec_time = (time.time() - start_time) * 1000
             return ExecutionResult(
@@ -325,9 +325,9 @@ class SubprocessSandbox:
                 passed = stdout.strip() == expected.strip() if expected else exit_code == 0
                 if not passed:
                     all_passed = False
-                    results.append(f"用例 {i+1}: ❌\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
+                    results.append(f"用例 {i+1}: [失败]\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
                 else:
-                    results.append(f"用例 {i+1}: ✅")
+                    results.append(f"用例 {i+1}: [成功]")
             
             exec_time = (time.time() - start_time) * 1000
             return ExecutionResult(
@@ -431,9 +431,9 @@ class SubprocessSandbox:
                 passed = stdout.strip() == expected.strip() if expected else exit_code == 0
                 if not passed:
                     all_passed = False
-                    results.append(f"用例 {i+1}: ❌\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
+                    results.append(f"用例 {i+1}: [失败]\n输入: {test_input}\n输出: {stdout.strip()}\n期望: {expected}")
                 else:
-                    results.append(f"用例 {i+1}: ✅")
+                    results.append(f"用例 {i+1}: [成功]")
             
             exec_time = (time.time() - start_time) * 1000
             return ExecutionResult(
