@@ -6,7 +6,7 @@
 # @Project  : AlgoMate
 import streamlit as st
 
-import config.config_data as config
+from utils.config_handler import session_conf
 from rag.rag import RagService
 from agent.react_agent import AlgoMateAgent
 
@@ -167,7 +167,7 @@ if prompt:
                 # 流式输出
                 res_stream = rag.chain.stream(
                     {"input": prompt}, 
-                    config.session_config
+                    session_conf
                 )
                 
                 res_container = st.empty()
@@ -224,6 +224,7 @@ if prompt:
                         status_map = {
                             "analyze": "🔍 分析题目...",
                             "generate_test_cases": "📝 生成测试用例...",
+                            "validate_test_cases": "✅ 验证测试用例...",
                             "generate_code": "💻 编写代码...",
                             "execute_code": "▶️ 执行代码...",
                             "analyze_result": "📊 分析结果...",

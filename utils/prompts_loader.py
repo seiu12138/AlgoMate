@@ -107,9 +107,31 @@ def load_code_generation_prompt():
         raise e
 
 
+def load_test_case_self_validation_prompt():
+    """
+    加载测试用例自验证prompt（生成后立即验证）
+
+    Returns:
+        TEST_CASE_SELF_VALIDATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["TEST_CASE_SELF_VALIDATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到TEST_CASE_SELF_VALIDATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载TEST_CASE_SELF_VALIDATION_PROMPT出错: {str(e)}")
+        raise e
+
+
 def load_test_case_validation_prompt():
     """
-    加载测试用例验证prompt
+    加载测试用例验证prompt（代码执行后验证）
 
     Returns:
         TEST_CASE_VALIDATION_PROMPT的内容
@@ -173,6 +195,94 @@ def load_final_answer_prompt():
         raise e
 
 
+def load_rag_system_role_prompt():
+    """
+    加载RAG系统角色prompt
+
+    Returns:
+        RAG_SYSTEM_ROLE_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RAG_SYSTEM_ROLE_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RAG_SYSTEM_ROLE_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RAG_SYSTEM_ROLE_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_rag_context_prompt():
+    """
+    加载RAG上下文prompt
+
+    Returns:
+        RAG_CONTEXT_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RAG_CONTEXT_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RAG_CONTEXT_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RAG_CONTEXT_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_rag_history_prompt():
+    """
+    加载RAG历史记录prompt
+
+    Returns:
+        RAG_HISTORY_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RAG_HISTORY_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RAG_HISTORY_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RAG_HISTORY_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_rag_user_prompt():
+    """
+    加载RAG用户问题prompt
+
+    Returns:
+        RAG_USER_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RAG_USER_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RAG_USER_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RAG_USER_PROMPT出错: {str(e)}")
+        raise e
+
+
 # 便捷函数：加载所有prompts
 def load_all_prompts():
     """
@@ -184,10 +294,15 @@ def load_all_prompts():
     return {
         "ANALYSIS_PROMPT": load_analysis_prompt(),
         "TEST_CASE_GENERATION_PROMPT": load_test_case_generation_prompt(),
+        "TEST_CASE_SELF_VALIDATION_PROMPT": load_test_case_self_validation_prompt(),
         "CODE_GENERATION_PROMPT": load_code_generation_prompt(),
         "TEST_CASE_VALIDATION_PROMPT": load_test_case_validation_prompt(),
         "CODE_FIX_PROMPT": load_code_fix_prompt(),
         "FINAL_ANSWER_PROMPT": load_final_answer_prompt(),
+        "RAG_SYSTEM_ROLE_PROMPT": load_rag_system_role_prompt(),
+        "RAG_CONTEXT_PROMPT": load_rag_context_prompt(),
+        "RAG_HISTORY_PROMPT": load_rag_history_prompt(),
+        "RAG_USER_PROMPT": load_rag_user_prompt(),
     }
 
 

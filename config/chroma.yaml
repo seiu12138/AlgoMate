@@ -1,0 +1,7 @@
+# Chroma向量数据库配置
+
+# 集合名称
+collection_name: "algomate"
+
+# 持久化目录
+persist_directory: "./data/chromd_db"

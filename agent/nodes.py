@@ -15,6 +15,7 @@ from tools.code_executor import CodeExecutor
 from utils.prompts_loader import (
     load_analysis_prompt,
     load_test_case_generation_prompt,
+    load_test_case_self_validation_prompt,
     load_code_generation_prompt,
     load_test_case_validation_prompt,
     load_code_fix_prompt,
@@ -105,20 +106,95 @@ class AgentNodes:
                     "input": tc["input"],
                     "expected": tc["expected"],
                     "actual": None,
-                    "passed": None
+                    "passed": None,
+                    "category": tc.get("category", "general"),
+                    "description": tc.get("description", "")
                 })
         except Exception as e:
             log_node("generate_test_cases", f"测试用例解析失败: {e}", level=logging.WARNING)
             # 使用默认测试用例
-            test_cases = [{"input": "", "expected": "", "actual": None, "passed": None}]
+            test_cases = [{"input": "", "expected": "", "actual": None, "passed": None, "category": "general", "description": ""}]
         
         log_test(f"生成 {len(test_cases)} 个测试用例")
         
         return {
             "test_cases": test_cases,
             "messages": [AIMessage(content=f"生成测试用例: {len(test_cases)} 个")],
-            "next_step": "generate_code"
+            "next_step": "validate_test_cases"
         }
+    
+    def validate_test_cases(self, state: AgentState) -> Dict[str, Any]:
+        """
+        验证测试用例节点（生成后立即验证）
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含validated_test_cases、messages和next_step的字典
+        """
+        log_node("validate_test_cases", "开始验证测试用例正确性")
+        
+        test_cases = state.get("test_cases", [])
+        test_cases_str = json.dumps(test_cases, ensure_ascii=False, indent=2)
+        
+        prompt = ChatPromptTemplate.from_template(load_test_case_self_validation_prompt())
+        chain = prompt | self.llm
+        
+        try:
+            response = chain.invoke({
+                "problem_analysis": state["problem_analysis"],
+                "test_cases": test_cases_str
+            })
+            
+            # 解析验证结果
+            content = response.content
+            log_test(f"测试用例自验证结果: {content[:200]}...")
+            
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            
+            validation = json.loads(content.strip())
+            validated_cases = validation.get("validated_test_cases", [])
+            corrections = validation.get("corrections_made", [])
+            
+            # 转换回标准格式
+            final_test_cases = []
+            for tc in validated_cases:
+                final_test_cases.append({
+                    "input": tc["input"],
+                    "expected": tc["expected"],
+                    "actual": None,
+                    "passed": None,
+                    "category": tc.get("category", "general"),
+                    "description": tc.get("description", "")
+                })
+            
+            if corrections:
+                log_test(f"修正了 {len(corrections)} 个测试用例的期望值", level=logging.WARNING)
+                for corr in corrections:
+                    log_test(f"  用例 {corr['index']}: {corr['reason']}")
+            else:
+                log_test("所有测试用例验证通过，无需修正")
+            
+            validation_summary = validation.get("validation_summary", "验证完成")
+            
+            return {
+                "test_cases": final_test_cases,
+                "messages": [AIMessage(content=f"测试用例验证: {validation_summary}")],
+                "next_step": "generate_code"
+            }
+            
+        except Exception as e:
+            log_node("validate_test_cases", f"测试用例验证失败: {e}", level=logging.WARNING)
+            # 验证失败也继续，使用原始测试用例
+            return {
+                "test_cases": test_cases,
+                "messages": [AIMessage(content="测试用例验证跳过，使用原始测试用例")],
+                "next_step": "generate_code"
+            }
     
     def generate_code(self, state: AgentState) -> Dict[str, Any]:
         """

@@ -11,7 +11,7 @@ from langchain_community.chat_models import ChatTongyi
 
 from .state import AgentState, create_initial_state
 from .nodes import AgentNodes
-import config.config_data as config
+from utils.config_handler import model_conf
 from utils.logger_handler import log_agent
 
 
@@ -31,7 +31,7 @@ class AlgoMateAgent:
         """
         # 初始化语言模型
         if llm is None:
-            self.llm = ChatTongyi(model=config.chat_model_name)
+            self.llm = ChatTongyi(model=model_conf['chat_model_name'])
         else:
             self.llm = llm
         
@@ -56,6 +56,7 @@ class AlgoMateAgent:
         # 添加节点
         workflow.add_node("analyze", self.nodes.analyze_problem)
         workflow.add_node("generate_test_cases", self.nodes.generate_test_cases)
+        workflow.add_node("validate_test_cases", self.nodes.validate_test_cases)
         workflow.add_node("generate_code", self.nodes.generate_code)
         workflow.add_node("execute_code", self.nodes.execute_code)
         workflow.add_node("analyze_result", self.nodes.analyze_result)
@@ -67,7 +68,8 @@ class AlgoMateAgent:
         
         # 添加边
         workflow.add_edge("analyze", "generate_test_cases")
-        workflow.add_edge("generate_test_cases", "generate_code")
+        workflow.add_edge("generate_test_cases", "validate_test_cases")
+        workflow.add_edge("validate_test_cases", "generate_code")
         workflow.add_edge("generate_code", "execute_code")
         workflow.add_edge("execute_code", "analyze_result")
         

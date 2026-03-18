@@ -1,1 +1,5 @@
 2026-03-18 18:43:25,244 - agent.nodes - INFO - logger_handler.py:87 - [Node-test]: 测试Node日志
+2026-03-18 19:11:25,409 - agent.nodes - INFO - logger_handler.py:87 - [Node-analyze_problem]: 开始分析题目
+2026-03-18 19:11:38,416 - agent.nodes - INFO - logger_handler.py:87 - [Node-analyze_problem]: 题目分析完成
+2026-03-18 19:11:38,418 - agent.nodes - INFO - logger_handler.py:87 - [Node-generate_test_cases]: 开始生成测试用例
+2026-03-18 19:12:19,181 - agent.nodes - INFO - logger_handler.py:87 - [Node-validate_test_cases]: 开始验证测试用例正确性

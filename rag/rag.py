@@ -11,25 +11,32 @@ from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+from utils.prompts_loader import (
+    load_rag_system_role_prompt,
+    load_rag_context_prompt,
+    load_rag_history_prompt,
+    load_rag_user_prompt,
+)
 from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory, RunnableLambda
 
 from .file_history_store import get_history
 from .vector_stores import VectorStoreService
 
-import config.config_data as config
+from utils.config_handler import model_conf
 
 
 class RagService(object):
     def __init__(self):
-        self.vector_service = VectorStoreService(embedding=DashScopeEmbeddings(model=config.embedding_model_name))
+        self.vector_service = VectorStoreService(embedding=DashScopeEmbeddings(model=model_conf['embedding_model_name']))
         self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", "考虑你是一个对于精通计算机算法的编程人员，请以此身份回答一下问题。"),
-            ("system", "我将为你提供用户提问相关资料: {context}。"),
-            ("system", "我将为你提供用户历史提问信息如下："),
+            ("system", load_rag_system_role_prompt()),
+            ("system", load_rag_context_prompt()),
+            ("system", load_rag_history_prompt()),
             MessagesPlaceholder("history"),
-            ("user", "基于上述内容解答用户所询问的题目，并且给出核心思路的分析。请回答用户待求解的题目: {input}")
+            ("user", load_rag_user_prompt())
         ])
-        self.chat_model = ChatTongyi(model=config.chat_model_name)
+        self.chat_model = ChatTongyi(model=model_conf['chat_model_name'])
         self.chain = self.__get_chain()
 
     def __get_chain(self):

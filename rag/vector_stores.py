@@ -5,16 +5,16 @@
 # @File     : vector_stores.py
 # @Project  : AlgoMate
 from langchain_chroma import Chroma
-import config.config_data as config
+from utils.config_handler import chroma_conf, search_conf
 
 class VectorStoreService(object):
     def __init__(self, embedding):
         self.embedding = embedding
         self.vector_store = Chroma(
-            collection_name=config.collection_name,
+            collection_name=chroma_conf['collection_name'],
             embedding_function=self.embedding,
-            persist_directory=config.persist_directory
+            persist_directory=chroma_conf['persist_directory']
         )
 
     def get_retriever(self):
-        return self.vector_store.as_retriever(searck_kwargs={"k": config.max_search_key})
+        return self.vector_store.as_retriever(searck_kwargs={"k": search_conf['max_search_key']})

@@ -12,7 +12,7 @@ from langchain_chroma import Chroma
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-import config.config_data as config
+from utils.config_handler import storage_conf, chroma_conf, splitter_conf
 
 
 def check_md5(md5_str: str) -> bool:
@@ -25,11 +25,11 @@ def check_md5(md5_str: str) -> bool:
     Returns:
         该md5是否已经被导入
     """
-    if not os.path.exists(config.md5_path):
-        open(config.md5_path, 'w', encoding='utf-8').close()    # 初始化md5文件
+    if not os.path.exists(storage_conf['md5_path']):
+        open(storage_conf['md5_path'], 'w', encoding='utf-8').close()    # 初始化md5文件
         return False
 
-    with open(config.md5_path, 'r', encoding='utf-8') as f:
+    with open(storage_conf['md5_path'], 'r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip()
             if line == md5_str:
@@ -44,7 +44,7 @@ def save_md5(md5_str: str) -> None:
     Args:
         md5_str: md5字符串
     """
-    with open(config.md5_path, 'a', encoding='utf-8') as f:
+    with open(storage_conf['md5_path'], 'a', encoding='utf-8') as f:
         f.write(md5_str + '\n')
 
 def get_string_md5(input_str: str, encoding='utf-8') -> str:
@@ -68,18 +68,18 @@ def get_string_md5(input_str: str, encoding='utf-8') -> str:
 class KnowledgeBaseService(object):
     def __init__(self):
         # Chroma数据库
-        os.makedirs(config.persist_directory, exist_ok=True)
+        os.makedirs(chroma_conf['persist_directory'], exist_ok=True)
         self.chroma = Chroma(
-            collection_name=config.collection_name,
+            collection_name=chroma_conf['collection_name'],
             embedding_function=DashScopeEmbeddings(model="text-embedding-v4"),
-            persist_directory=config.persist_directory
+            persist_directory=chroma_conf['persist_directory']
         )
 
         # 文本分割器
         self.spliter = RecursiveCharacterTextSplitter(
-            chunk_size=config.chunk_size,
-            chunk_overlap=config.chunk_overlap,
-            separators=config.separators,
+            chunk_size=splitter_conf['chunk_size'],
+            chunk_overlap=splitter_conf['chunk_overlap'],
+            separators=splitter_conf['separators'],
             length_function=len
         )
 
@@ -95,7 +95,7 @@ class KnowledgeBaseService(object):
         if check_md5(hex):
             return "[跳过]数据已在知识库中"
 
-        if len(data) > config.max_split_char_number:
+        if len(data) > splitter_conf['max_split_char_number']:
             knowledge = self.spliter.split_text(data)
         else:
             knowledge = [data]

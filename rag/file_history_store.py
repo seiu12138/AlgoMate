@@ -11,7 +11,7 @@ from typing import Sequence, List
 
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.messages import BaseMessage, message_to_dict, messages_from_dict
-import config.config_data as config
+from utils.config_handler import storage_conf
 
 
 class FileChatMessageHistory(BaseChatMessageHistory):
@@ -43,4 +43,4 @@ class FileChatMessageHistory(BaseChatMessageHistory):
             json.dump([], f)
 
 def get_history(session_id):
-    return FileChatMessageHistory(session_id, config.history_path)
+    return FileChatMessageHistory(session_id, storage_conf['history_path'])
