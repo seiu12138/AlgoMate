@@ -6,6 +6,7 @@
 # @Project  : AlgoMate
 import json
 import os
+from json import JSONDecodeError
 from typing import Sequence, List
 
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -34,7 +35,7 @@ class FileChatMessageHistory(BaseChatMessageHistory):
         try:
             with open(self.file_path, "r", encoding="utf-8") as f:
                 return messages_from_dict(json.load(f))
-        except FileNotFoundError:
+        except Exception:
             return []
 
     def clear(self) -> None:

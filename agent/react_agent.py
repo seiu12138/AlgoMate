@@ -5,8 +5,6 @@
 # @File     : react_agent.py
 # @Project  : AlgoMate
 from typing import Dict, Any, Iterator
-from langchain_core.messages import AIMessage
-from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_community.chat_models import ChatTongyi
@@ -14,6 +12,7 @@ from langchain_community.chat_models import ChatTongyi
 from .state import AgentState, create_initial_state
 from .nodes import AgentNodes
 import config.config_data as config
+from utils.logger_handler import log_agent
 
 
 
@@ -24,10 +23,10 @@ class AlgoMateAgent:
     
     def __init__(self, llm=None, max_iterations: int = 5):
         """
-        初始化 Agent
-        
+        初始化Agent
+
         Args:
-            llm: LangChain 语言模型，默认使用配置中的模型
+            llm: LangChain语言模型，默认使用配置中的模型
             max_iterations: 最大代码修复迭代次数
         """
         # 初始化语言模型
@@ -42,14 +41,14 @@ class AlgoMateAgent:
         # 构建工作流图
         self.graph = self._build_graph()
         
-        print(f"✅ AlgoMateAgent 初始化完成 (最大迭代: {max_iterations})")
+        log_agent(f"AlgoMateAgent初始化完成，最大迭代次数: {max_iterations}")
     
     def _build_graph(self) -> StateGraph:
         """
-        构建 LangGraph 工作流
-        
+        构建LangGraph工作流
+
         Returns:
-            编译后的 StateGraph
+            编译后的StateGraph
         """
         # 创建工作流
         workflow = StateGraph(AgentState)
@@ -97,8 +96,11 @@ class AlgoMateAgent:
         """
         决定是否继续迭代
 
-        :param state: 当前Agent状态
-        :return: "fix"修复代码 / "reexecute"重新执行 / "finish"结束
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            "fix"修复代码 / "reexecute"重新执行 / "finish"结束
         """
         if state.get("is_solved", False):
             return "finish"
@@ -147,11 +149,11 @@ class AlgoMateAgent:
         }
         
         # 执行
-        print(f"\n{'='*60}")
-        print(f"🚀 开始解决问题")
-        print(f"{'='*60}")
-        print(f"题目: {problem_description[:100]}...")
-        print(f"语言: {language}")
+        log_agent("=" * 60)
+        log_agent("开始解决问题")
+        log_agent("=" * 60)
+        log_agent(f"题目: {problem_description[:100]}...")
+        log_agent(f"编程语言: {language}")
         
         final_state = None
         for event in self.graph.stream(initial_state, thread_config):
@@ -159,14 +161,14 @@ class AlgoMateAgent:
             for node_name, output in event.items():
                 if node_name == "__end__":
                     continue
-                print(f"\n📍 节点 '{node_name}' 完成")
+                log_agent(f"节点 '{node_name}' 完成")
         
         # 获取最终状态
         final_state = self.graph.get_state(thread_config)
         
-        print(f"\n{'='*60}")
-        print(f"✅ 问题解决流程结束")
-        print(f"{'='*60}")
+        log_agent("=" * 60)
+        log_agent("问题解决流程结束")
+        log_agent("=" * 60)
         
         return final_state.values if final_state else {}
     
@@ -207,11 +209,11 @@ class AlgoMateAgent:
     
     def get_execution_trace(self, session_id: str = "default") -> list:
         """
-        获取执行轨迹（用于调试和展示）
-        
+        获取执行轨迹
+
         Args:
-            session_id: 会话ID
-        
+            session_id: 会话ID，用于调试和展示
+
         Returns:
             执行历史列表
         """
@@ -233,15 +235,15 @@ def solve_problem(problem_description: str,
                   max_iterations: int = 5) -> str:
     """
     便捷函数：快速解决算法问题
-    
+
     Args:
         problem_description: 题目描述
-        language: 编程语言
+        language: 编程语言（python/cpp/java）
         max_iterations: 最大迭代次数
-    
+
     Returns:
         最终答案字符串
-    
+
     Example:
         >>> answer = solve_problem("两数之和: 给定数组 nums 和 target...")
         >>> print(answer)

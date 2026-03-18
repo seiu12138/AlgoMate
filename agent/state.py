@@ -80,10 +80,13 @@ def create_initial_state(problem_description: str,
     """
     创建初始状态
 
-    :param problem_description: 题目描述
-    :param language: 目标编程预言
-    :param max_iterations: 最大尝试次数
-    :return: 初始化的AgentState
+    Args:
+        problem_description: 题目描述
+        language: 目标编程语言
+        max_iterations: 最大尝试次数
+
+    Returns:
+        初始化的AgentState
     """
     return AgentState(
         messages=[HumanMessage(content=problem_description)],
