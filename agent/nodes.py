@@ -35,6 +35,12 @@ class AgentNodes:
     def analyze_problem(self, state: AgentState) -> Dict[str, Any]:
         """
         分析题目节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含problem_analysis、messages和next_step的字典
         """
         log_node("analyze_problem", "开始分析题目")
         
@@ -67,7 +73,13 @@ class AgentNodes:
     
     def generate_test_cases(self, state: AgentState) -> Dict[str, Any]:
         """
-        生成测试用例节点。自动生成覆盖正常和边界情况的测试用例。
+        生成测试用例节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含test_cases、messages和next_step的字典
         """
         log_node("generate_test_cases", "开始生成测试用例")
         
@@ -110,7 +122,13 @@ class AgentNodes:
     
     def generate_code(self, state: AgentState) -> Dict[str, Any]:
         """
-        生成代码节点。基于题目分析和测试用例生成初始代码。
+        生成代码节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含generated_code、messages和next_step的字典
         """
         log_node("generate_code", "开始生成代码")
         
@@ -153,7 +171,13 @@ class AgentNodes:
     
     def execute_code(self, state: AgentState) -> Dict[str, Any]:
         """
-        执行代码节点。使用代码执行器运行生成的代码，并收集结果。
+        执行代码节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含execution_result、messages和next_step的字典
         """
         log_node("execute_code", "开始执行代码")
         
@@ -193,8 +217,13 @@ class AgentNodes:
     
     def analyze_result(self, state: AgentState) -> Dict[str, Any]:
         """
-        分析结果节点。判断执行是否成功，决定下一步行动。
-        包含测试用例验证和可信度评估机制。
+        分析结果节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含is_solved、execution_history、iteration_count、messages和next_step的字典
         """
         log_node("analyze_result", "开始分析执行结果")
         
@@ -320,7 +349,13 @@ class AgentNodes:
     
     def fix_code(self, state: AgentState) -> Dict[str, Any]:
         """
-        修复代码节点。分析错误原因，生成修复后的代码。
+        修复代码节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含generated_code、messages和next_step的字典
         """
         log_node("fix_code", "开始修复代码")
         
@@ -386,7 +421,13 @@ class AgentNodes:
     
     def create_final_answer(self, state: AgentState) -> Dict[str, Any]:
         """
-        生成最终答案节点。整合所有信息，生成完整的解答报告。
+        生成最终答案节点
+
+        Args:
+            state: 当前Agent状态
+
+        Returns:
+            包含final_answer和messages的字典
         """
         log_node("create_final_answer", "开始生成最终答案")
         

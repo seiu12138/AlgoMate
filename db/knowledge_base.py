@@ -19,8 +19,11 @@ def check_md5(md5_str: str) -> bool:
     """
     检查传入的md5字符串是否已经处理
 
-    :param md5_str: md5字符串
-    :return: 该md5是否已经被导入
+    Args:
+        md5_str: md5字符串
+
+    Returns:
+        该md5是否已经被导入
     """
     if not os.path.exists(config.md5_path):
         open(config.md5_path, 'w', encoding='utf-8').close()    # 初始化md5文件
@@ -38,7 +41,8 @@ def save_md5(md5_str: str) -> None:
     """
     将传入的md5字符串持久化存储到文件
 
-    :param md5_str:  md5字符串
+    Args:
+        md5_str: md5字符串
     """
     with open(config.md5_path, 'a', encoding='utf-8') as f:
         f.write(md5_str + '\n')
@@ -47,9 +51,12 @@ def get_string_md5(input_str: str, encoding='utf-8') -> str:
     """
     将传入的文件转换为md5字符串
 
-    :param input_str: 待编码的文件内容
-    :param encoding: 文件编码格式
-    :return: md5字符串
+    Args:
+        input_str: 待编码的文件内容
+        encoding: 文件编码格式
+
+    Returns:
+        md5字符串
     """
     bytes = input_str.encode(encoding=encoding)
     md5 = hashlib.md5()
@@ -80,8 +87,9 @@ class KnowledgeBaseService(object):
         """
         将传入的数据向量化，存入向量数据库中
 
-        :param data: 待向量化数据
-        :param filename: 数据对应文件的文件名
+        Args:
+            data: 待向量化数据
+            filename: 数据对应文件的文件名
         """
         hex = get_string_md5(data)
         if check_md5(hex):

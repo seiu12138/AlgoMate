@@ -140,25 +140,20 @@ class SubprocessSandbox:
         # 默认 Python
         return Language.PYTHON
     
-    def _extract_python_function(self, code: str, function_name: str = "solution") -> Optional[str]:
-        """从代码中提取指定函数"""
-        # 匹配函数定义
-        pattern = rf'def\s+{function_name}\s*\([^)]*\)(?:\s*->\s*\w+)?\s*:'
-        if re.search(pattern, code):
-            return function_name
-        return None
-    
     def execute(self, code: str, language: Optional[Language] = None,
                 input_data: Optional[str] = None, 
                 test_cases: Optional[List[tuple]] = None) -> ExecutionResult:
         """
         进程受限环境执行代码
-        
-        :param code: 源代码字符串
-        :param language: 编程语言 ('python', 'cpp', 'java'，自动检测)
-        :param input_data: 标准输入数据
-        :param test_cases: 测试用例列表 [(input, expected_output), ...]
-        :return: ExecutionResult
+
+        Args:
+            code: 源代码字符串
+            language: 编程语言（python/cpp/java），自动检测
+            input_data: 标准输入数据
+            test_cases: 测试用例列表 [(input, expected_output), ...]
+
+        Returns:
+            代码执行结果
         """
         import time
         
@@ -503,13 +498,16 @@ class DockerSandbox:
                 input_data: Optional[str] = None,
                 test_cases: Optional[List[tuple]] = None) -> ExecutionResult:
         """
-        基于Docker环境执行的代码
+        基于Docker环境执行代码
 
-        :param code: 源代码字符串
-        :param language: 编程语言 ('python', 'cpp', 'java'，自动检测)
-        :param input_data: 标准输入数据
-        :param test_cases: 测试用例列表 [(input, expected_output), ...]
-        :return: ExecutionResult
+        Args:
+            code: 源代码字符串
+            language: 编程语言（python/cpp/java）
+            input_data: 标准输入数据
+            test_cases: 测试用例列表 [(input, expected_output), ...]
+
+        Returns:
+            代码执行结果
         """
         if not self.available:
             return ExecutionResult(
@@ -599,11 +597,14 @@ class CodeExecutor:
         """
         代码执行
 
-        :param code: 源代码字符串
-        :param language: 编程语言 ('python', 'cpp', 'java'，自动检测)
-        :param input_data: 标准输入数据
-        :param test_cases: 测试用例列表 [(input, expected_output), ...]
-        :return:
+        Args:
+            code: 源代码字符串
+            language: 编程语言（python/cpp/java），自动检测
+            input_data: 标准输入数据
+            test_cases: 测试用例列表 [(input, expected_output), ...]
+
+        Returns:
+            代码执行结果
         """
         lang_enum = None
         if language:
@@ -634,17 +635,20 @@ def execute_code(code: str,
     """
     代码执行函数
 
+    Args:
+        code: 待执行的代码
+        language: 待执行代码所用编程语言
+        input_data: 待执行代码所需输入数据
+        test_cases: 待执行代码的测试用例
+        timeout: 代码超时时间
+
+    Returns:
+        代码执行结果
+
     Example:
         >>> result = execute_code("print('Hello')", language="python")
         >>> print(result.stdout)
         Hello
-
-    :param code: 待执行的代码
-    :param language: 待执行代码所用编程语言
-    :param input_data: 待执行代码所需输入数据
-    :param test_cases: 待执行代码的测试用例
-    :param timeout: 代码超时时间
-    :return:
     """
     executor = CodeExecutor(timeout=timeout)
     return executor.execute(code, language, input_data, test_cases)

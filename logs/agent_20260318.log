@@ -1,0 +1,4 @@
+2026-03-18 18:43:25,244 - agent.react - INFO - logger_handler.py:87 - [Agent]: 测试Agent日志
+2026-03-18 18:43:25,244 - agent.nodes - INFO - logger_handler.py:87 - [Node-test]: 测试Node日志
+2026-03-18 18:43:25,244 - agent - INFO - logger_handler.py:87 - [Test]: 测试Test日志
+2026-03-18 18:43:25,244 - agent - INFO - logger_handler.py:87 - [Code]: 测试Code日志
