@@ -1,10 +1,10 @@
 # 文本分割器配置
 
 # 分割块大小
-chunk_size: 1000
+chunk_size: 1500
 
 # 块间重叠字符数
-chunk_overlap: 100
+chunk_overlap: 150
 
 # 分隔符列表（按优先级）
 separators:

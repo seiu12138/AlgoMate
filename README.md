@@ -35,15 +35,15 @@ pip install -r requirements.txt
 
 ### 2. 配置模型
 
-编辑 `config/config_data.py`:
+编辑 `config/model.yaml`:
 
-```python
+```yaml
 # 使用 DashScope (通义千问)
-embedding_model_name = "text-embedding-v4"
-chat_model_name = "qwen3-max"
+embedding_model_name: "text-embedding-v1"
+chat_model_name: "qwen3-max"
 
 # 或使用 OpenAI
-# chat_model_name = "gpt-4"
+# chat_model_name: "gpt-4"
 ```
 
 设置 API Key:
@@ -119,8 +119,12 @@ algomate/
 ├── db/                     # 知识库管理
 │   ├── knowledge_base.py
 │   └── file_uploader.py
-├── config/
-│   └── config_data.py      # 配置
+├── config/                 # 配置目录 (YAML)
+│   ├── storage.yaml        # 存储路径配置
+│   ├── chroma.yaml         # Chroma数据库配置
+│   ├── model.yaml          # AI模型配置
+│   ├── agent.yaml          # Agent参数配置
+│   └── ...
 ├── algomate_web.py         # Web 界面
 ├── test_agent.py           # 测试脚本
 └── requirements.txt        # 依赖
