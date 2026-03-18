@@ -1,2 +1,0 @@
-2026-03-18 18:43:25,244 - agent.react - INFO - logger_handler.py:87 - [Agent]: 测试Agent日志
-2026-03-18 19:11:25,395 - agent.react - INFO - logger_handler.py:87 - [Agent]: AlgoMateAgent初始化完成，最大迭代次数: 5
