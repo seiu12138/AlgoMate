@@ -7,8 +7,10 @@
 import streamlit as st
 
 from utils.config_handler import session_conf
+from utils.style_loader import load_theme
 from rag.rag import RagService
 from agent.react_agent import AlgoMateAgent
+
 
 # 页面配置
 st.set_page_config(
@@ -17,6 +19,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# 加载主题样式
+load_theme("algomate_theme")
+
 
 ### streamlit环境初始化
 def init_session():
@@ -40,25 +46,27 @@ init_session()
 
 ### streamlit侧边栏实现
 with st.sidebar:
+    # 标题区域
     st.title("🤖 AlgoMate")
-    st.markdown("智能算法学习与解题助手")
+    st.markdown("<span style='color: #4b5563;'>智能算法学习与解题助手</span>", unsafe_allow_html=True)
+    
     st.divider()
     
-    # 模式选择
-    st.subheader("工作模式")
+    # ========== 工作模式选择 ==========
+    st.markdown("<p class='sidebar-section-title'>📋 工作模式</p>", unsafe_allow_html=True)
+    
     mode = st.radio(
         "选择模式",
         ["RAG 问答模式", "Agent 解题模式"],
-        help="""
-        **RAG 问答模式**：基于知识库回答算法相关问题
-        **Agent 解题模式**：AI 自动分析、编写、测试、修复代码
-        """
+        label_visibility="collapsed",
+        help="RAG 问答模式：基于知识库回答算法相关问题\nAgent 解题模式：AI 自动分析、编写、测试、修复代码"
     )
     st.session_state["mode"] = mode
-
+    
     # Agent 配置
     if mode == "Agent 解题模式":
-        st.subheader("Agent 配置")
+        st.divider()
+        st.markdown("<p class='sidebar-subtitle'>⚙️ Agent 配置</p>", unsafe_allow_html=True)
         language = st.selectbox(
             "编程语言",
             ["python", "cpp", "java"],
@@ -73,23 +81,18 @@ with st.sidebar:
         language = "python"
         max_iter = 5
     
-
+    # ========== 操作按钮 ==========
+    st.divider()
+    st.markdown("<p class='sidebar-section-title'>🛠️ 操作</p>", unsafe_allow_html=True)
     
-    # 清空对话
     if st.button("🗑️ 清空对话", use_container_width=True):
         st.session_state["message"] = []
         st.session_state["agent_results"] = {}
         st.rerun()
 
-    st.markdown("""
-        <style>
-        [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-            min-height: 90vh;
-            justify-content: space-between;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    st.caption("Powered by LangChain + LangGraph")
+    # 底部信息
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.caption("<span style='color: #6b7280;'>Powered by LangChain + LangGraph</span>", unsafe_allow_html=True)
 
 ### 主界面
 st.title("AlgoMate" if st.session_state["mode"] == "RAG 问答模式" else "AlgoMate Agent")
@@ -167,7 +170,7 @@ if prompt:
                 # 流式输出
                 res_stream = rag.chain.stream(
                     {"input": prompt}, 
-                    session_conf
+                    session_conf.get("session_config", {})
                 )
                 
                 res_container = st.empty()

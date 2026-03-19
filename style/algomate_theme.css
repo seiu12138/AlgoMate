@@ -1,0 +1,340 @@
+/* ============================================
+   AlgoMate Theme - 磨砂玻璃 + 渐变背景
+   ============================================ */
+
+/* ========== 隐藏 Streamlit 默认 Header/状态栏 ========== */
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+
+[data-testid="stToolbar"] {
+    display: none !important;
+}
+
+.block-container {
+    padding-top: 1rem !important;
+}
+
+/* ========== 全局背景 - 彩色渐变 + 磨砂玻璃效果 ========== */
+.stApp {
+    background: linear-gradient(135deg, 
+        rgba(102, 126, 234, 0.15) 0%, 
+        rgba(118, 75, 162, 0.15) 50%,
+        rgba(240, 147, 251, 0.1) 100%
+    ),
+    linear-gradient(225deg,
+        rgba(79, 172, 254, 0.1) 0%,
+        rgba(0, 242, 254, 0.05) 100%
+    ) !important;
+    background-attachment: fixed !important;
+}
+
+/* 主界面内容区域 */
+.main .block-container {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 
+        0 8px 32px rgba(31, 38, 135, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+    padding: 2rem !important;
+    margin: 1rem auto !important;
+    max-width: 1200px !important;
+}
+
+/* 主内容区左侧装饰线 */
+.main {
+    position: relative !important;
+}
+
+.main::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 3px !important;
+    height: 100% !important;
+    background: linear-gradient(180deg, 
+        rgba(147, 197, 253, 0.2) 0%,
+        rgba(59, 130, 246, 0.4) 30%,
+        rgba(96, 165, 250, 0.4) 70%,
+        rgba(147, 197, 253, 0.2) 100%
+    ) !important;
+}
+
+/* ========== 侧边栏 - 蓝白色系渐变 ========== */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, 
+        rgba(219, 234, 254, 0.9) 0%,
+        rgba(239, 246, 255, 0.95) 40%,
+        rgba(255, 255, 255, 0.98) 100%
+    ) !important;
+    border-right: none !important;
+}
+
+/* ========== 侧边栏右侧分隔条 ========== */
+[data-testid="stSidebar"]::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 3px !important;
+    height: 100% !important;
+    background: linear-gradient(180deg, 
+        rgba(59, 130, 246, 0.3) 0%,
+        rgba(96, 165, 250, 0.6) 50%,
+        rgba(59, 130, 246, 0.3) 100%
+    ) !important;
+    box-shadow: 
+        2px 0 8px rgba(59, 130, 246, 0.2),
+        4px 0 16px rgba(59, 130, 246, 0.1) !important;
+}
+
+[data-testid="stSidebar"] > div:first-child {
+    background: transparent !important;
+}
+
+[data-testid="stSidebar"] .block-container {
+    padding: 2rem 1.5rem !important;
+}
+
+/* 侧边栏标题 - 蓝白色系 */
+[data-testid="stSidebar"] h1 {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] .stMarkdown {
+    color: #1e40af !important;
+}
+
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stSlider label {
+    color: #374151 !important;
+    font-weight: 500 !important;
+}
+
+/* ========== 蓝色带阴影分割线 ========== */
+[data-testid="stSidebar"] hr {
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(59, 130, 246, 0.4) 20%, 
+        rgba(96, 165, 250, 0.9) 50%, 
+        rgba(59, 130, 246, 0.4) 80%, 
+        transparent 100%
+    ) !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25) !important;
+    margin: 20px 0 !important;
+}
+
+/* 区块标题样式 - 蓝白色系 */
+.sidebar-section-title {
+    color: #1e40af !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    margin: 16px 0 12px 0 !important;
+    padding: 0 !important;
+}
+
+.sidebar-subtitle {
+    color: #2563eb !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    margin: 12px 0 8px 0 !important;
+    padding: 0 !important;
+}
+
+/* ========== 侧边栏按钮样式 - 蓝色渐变 ========== */
+[data-testid="stSidebar"] .stButton > button {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: white !important;
+    border-radius: 12px !important;
+    border: none !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* ========== 聊天消息样式 ========== */
+[data-testid="stChatMessage"] {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 20px !important;
+    padding: 16px 20px !important;
+    margin: 12px 0 !important;
+    box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* 用户消息 - 蓝色 */
+[data-testid="stChatMessage"][data-testid="stChatMessageUser"] {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.15)) !important;
+    border-left: 4px solid #3b82f6 !important;
+}
+
+/* AI 消息 - 天蓝色 */
+[data-testid="stChatMessage"]:not([data-testid="stChatMessageUser"]) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(239, 246, 255, 0.9)) !important;
+    border-left: 4px solid #60a5fa !important;
+}
+
+[data-testid="stChatMessage"] [data-testid="stChatAvatar"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* ========== 底部输入区域 ========== */
+[data-testid="stBottomBlock"] {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    padding: 8px 16px !important;
+    margin: 0 !important;
+}
+
+[data-testid="stBottomBlock"] > div {
+    padding: 0 !important;
+    max-width: 100% !important;
+}
+
+/* ========== 输入框样式 ========== */
+[data-testid="stChatInput"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+[data-testid="stChatInput"]:focus-within {
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    box-shadow: 
+        0 4px 12px rgba(59, 130, 246, 0.1),
+        inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* 移除红色边框 */
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] input,
+[data-testid="stChatInput"] textarea:focus,
+[data-testid="stChatInput"] input:focus,
+[data-testid="stChatInput"] textarea:active,
+[data-testid="stChatInput"] input:active,
+[data-testid="stChatInput"] textarea[data-focus="true"],
+[data-testid="stChatInput"] input[data-focus="true"] {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
+
+[data-testid="stChatInput"] textarea:focus-visible,
+[data-testid="stChatInput"] input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+[data-testid="stChatInput"] textarea:-webkit-autofill,
+[data-testid="stChatInput"] input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    box-shadow: 0 0 0 30px white inset !important;
+}
+
+/* ========== 标题样式 ========== */
+h1 {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #8b5cf6 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+}
+
+h2, h3 {
+    color: #1e40af !important;
+    font-weight: 600 !important;
+}
+
+/* ========== 代码块样式 ========== */
+st.code {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========== Expander 样式 ========== */
+[data-testid="stExpander"] {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+    margin: 8px 0 !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+[data-testid="stExpander"] > div:first-child {
+    border-radius: 16px !important;
+}
+
+/* ========== 滚动条美化 ========== */
+::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #5a67d8 0%, #6b46c1 100%) !important;
+}
+
+/* ========== 进度条样式 ========== */
+[data-testid="stProgress"] > div > div {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+    border-radius: 10px !important;
+}
+
+/* ========== 提示框样式 ========== */
+[data-testid="stAlert"] {
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* ========== 底部提示文字 ========== */
+[data-testid="stCaption"] {
+    color: #4b5563 !important;
+    font-style: italic !important;
+}
