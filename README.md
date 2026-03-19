@@ -141,6 +141,8 @@ streamlit run algomate_web.py
 
 适合算法概念学习、知识点查询。
 
+![RAG 问答模式界面](img/rag.png)
+
 1. 📤 上传算法知识文档（PDF/TXT 格式）到 `data/knowledge_base/`
 2. 🔥 执行预热脚本加载文档
 3. 🎯 在 Web 界面选择 "RAG 问答模式"
