@@ -1,11 +1,15 @@
 import { Sidebar } from "./components/Sidebar";
 import { MessageList } from "./components/Chat";
 import { ChatInput } from "./components/Input/ChatInput";
+import { ModeInitializer } from "./components/ModeInitializer";
 import "./styles/globals.css";
 
 function App() {
     return (
         <div className="app-bg h-screen w-screen overflow-hidden flex">
+            {/* ModeInitializer - handles session loading on mode change */}
+            <ModeInitializer />
+            
             {/* 侧边栏 - 固定高度 */}
             <Sidebar />
             
