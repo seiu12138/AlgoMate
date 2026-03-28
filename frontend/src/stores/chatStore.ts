@@ -110,6 +110,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set({ isLoadingSessions: true });
             const response = await sessionAPI.getSession(sessionId);
             
+            // If session not found or error, clear state
+            if (!response) {
+                set({
+                    currentSessionId: null,
+                    messages: [],
+                    isLoadingSessions: false,
+                });
+                return;
+            }
+            
             // If no messages, clear current messages
             if (!response.messages || response.messages.length === 0) {
                 set({

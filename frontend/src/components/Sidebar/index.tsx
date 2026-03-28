@@ -1,10 +1,10 @@
-import { GraduationCap } from "lucide-react";
 import { ModeSelector } from "./ModeSelector";
 import { AgentConfig } from "./AgentConfig";
 import { ActionButtons } from "./ActionButtons";
 import { ConversationList } from "./ConversationList";
 import { useChatStore } from "../../stores/chatStore";
 import { useConfigStore } from "../../stores/configStore";
+import { AlgoMateLogoSimple } from "../Logo/AlgoMateLogo";
 
 export function Sidebar() {
     const { messages, mode, setMode, clearMessages } = useChatStore();
@@ -16,7 +16,7 @@ export function Sidebar() {
             <div className="p-5 border-b border-white/30">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <GraduationCap className="w-6 h-6 text-white" />
+                        <AlgoMateLogoSimple size={24} className="text-white" />
                     </div>
                     <div>
                         <h1 className="text-lg font-bold gradient-title">AlgoMate</h1>

@@ -4,6 +4,7 @@ import { MessageItem } from "./MessageItem";
 import { ProgressBar } from "../common/ProgressBar";
 import { StatusBadge } from "../common/StatusBadge";
 import { ChevronDown } from "lucide-react";
+import { AlgoMateLogo } from "../Logo/AlgoMateLogo";
 
 export function MessageList() {
     const { messages, isLoading, agentProgress, agentStatus } = useChatStore();
@@ -87,8 +88,8 @@ export function MessageList() {
     if (messages.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center mb-6">
-                    <span className="text-4xl">🤖</span>
+                <div className="mb-6">
+                    <AlgoMateLogo size={80} />
                 </div>
                 <h2 className="text-2xl font-bold gradient-title mb-3">
                     欢迎使用 AlgoMate
