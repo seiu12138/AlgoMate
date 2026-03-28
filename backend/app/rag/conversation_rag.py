@@ -255,25 +255,15 @@ Respond with ONLY a JSON object:
         Returns:
             Generated title (3-5 words)
         """
-        if not first_message or len(first_message.strip()) < 5:
+        if not first_message or len(first_message.strip()) < 2:
             return "New Conversation"
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """Based on the following first message of a conversation, generate a concise 3-5 word title.
-The title should capture the main topic or question.
-
-Respond with ONLY the title, no quotes or additional text."""),
-            ("user", "Message: {message}")
-        ])
-        
-        try:
-            chain = prompt | self.llm
-            response = await chain.ainvoke({"message": first_message[:500]})
-            title = response.content.strip()[:50]
-            return title or "New Conversation"
-        except Exception as e:
-            # Fallback: truncate first message
-            return first_message[:30] + "..." if len(first_message) > 30 else first_message
+        # Simple truncation strategy - use first 30 chars of user message
+        # This is more reliable than LLM generation
+        message = first_message.strip()
+        if len(message) <= 30:
+            return message
+        return message[:30] + "..."
 
 
 # Global instance for dependency injection

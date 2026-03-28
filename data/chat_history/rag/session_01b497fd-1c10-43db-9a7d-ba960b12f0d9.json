@@ -1,0 +1,31 @@
+{
+  "session": {
+    "id": "01b497fd-1c10-43db-9a7d-ba960b12f0d9",
+    "type": "rag",
+    "title": "New Conversation",
+    "createdAt": "2026-03-28T14:10:13.396221",
+    "updatedAt": "2026-03-28T14:10:55.578173",
+    "messageCount": 2,
+    "lastMessagePreview": "# 动态规划详解\n\n## 问题理解\n用户询问的是**动态规划（Dynamic Programming..."
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "动态规划",
+      "metadata": {},
+      "id": "00e88ea6-e03d-46de-b606-5b54998b45f1",
+      "timestamp": "2026-03-28T14:10:13.772557"
+    },
+    {
+      "role": "assistant",
+      "content": "# 动态规划详解\n\n## 问题理解\n用户询问的是**动态规划（Dynamic Programming, DP）**这一算法思想。动态规划是算法竞赛和实际编程中非常重要的技术，用于解决具有**重叠子问题**和**最优子结构**性质的问题。\n\n---\n\n## 核心思路\n\n### 算法选择\n- **为什么选择动态规划**：当问题可以分解为相互重叠的子问题，且原问题的最优解包含子问题的最优解时，动态规划能避免重复计算，显著提高效率。\n- **核心思想**：将复杂问题分解为更小的子问题，存储子问题的解（记忆化），通过组合子问题的解来构建原问题的解。\n\n### 关键步骤\n1. **定义状态**：确定DP数组的含义，即`dp[i]`或`dp[i][j]`代表什么\n2. **找出状态转移方程**：建立当前状态与之前状态的关系\n3. **确定初始条件**：设置边界情况的值\n4. **确定计算顺序**：按照依赖关系依次计算所有状态\n5. **返回最终答案**：从DP数组中提取所需结果\n\n### 直观理解\n可以把动态规划想象成**爬楼梯**：\n- 每一步都有多种选择（比如爬1阶或2阶）\n- 到达第n阶的方法数 = 到达第(n-1)阶的方法数 + 到达第(n-2)阶的方法数\n- 我们不需要每次都重新计算前面的步骤，而是记住之前的结果直接使用\n\n---\n\n## 详细解答\n\n为了更好地说明动态规划，我们以经典的**斐波那契数列**为例：\n\n### 方法一：基础解法（递归+记忆化）\n\n**思路说明**：\n- 使用递归实现，但用字典存储已计算的结果\n- 避免重复计算相同的子问题\n\n```python\ndef fib_memo(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n <= 1:\n        return n\n    memo[n] = fib_memo(n-1, memo) + fib_memo(n-2, memo)\n    return memo[n]\n```\n\n**复杂度分析**：\n- 时间复杂度：O(n) - 每个数字只计算一次\n- 空间复杂度：O(n) - 递归栈深度 + 记忆化数组\n\n### 方法二：优化解法（推荐）\n\n**优化思路**：\n- 使用自底向上的迭代方式\n- 只保留必要的状态，进一步优化空间\n\n```python\ndef fib_dp(n):\n    if n <= 1:\n        return n\n    \n    # 只需要保存前两个状态\n    prev2, prev1 = 0, 1\n    for i in range(2, n + 1):\n        current = prev1 + prev2\n        prev2, prev1 = prev1, current\n    \n    return prev1\n```\n\n**复杂度分析**：\n- 时间复杂度：O(n)\n- 空间复杂度：O(1) - 只使用常数额外空间\n\n---\n\n## 代码实现\n\n下面提供一个完整的动态规划模板，以**背包问题**为例（0-1背包）：\n\n```python\ndef solution():\n    # 输入处理\n    try:\n        n, capacity = map(int, input().split())\n        weights = list(map(int, input().split()))\n        values = list(map(int, input().split()))\n    except:\n        # 默认测试数据\n        n, capacity = 3, 4\n        weights = [1, 3, 4]\n        values = [15, 20, 30]\n    \n    # DP数组：dp[i][w] 表示前i个物品，在容量为w时的最大价值\n    dp = [[0 for _ in range(capacity + 1)] for _ in range(n + 1)]\n    \n    # 填充DP表\n    for i in range(1, n + 1):\n        for w in range(capacity + 1):\n            # 不选择第i个物品\n            dp[i][w] = dp[i-1][w]\n            \n            # 如果能选择第i个物品，比较选与不选的最大值\n            if weights[i-1] <= w:\n                dp[i][w] = max(dp[i][w], dp[i-1][w - weights[i-1]] + values[i-1])\n    \n    print(dp[n][capacity])\n\nif __name__ == \"__main__\":\n    solution()\n```\n\n---\n\n## 复杂度分析\n\n| 指标 | 复杂度 | 说明 |\n|------|--------|------|\n| 时间复杂度 | O(n × capacity) | 需要填充二维DP表的所有位置 |\n| 空间复杂度 | O(n × capacity) | 存储二维DP数组 |\n\n> **空间优化提示**：由于每次只依赖上一行的状态，可以将空间复杂度优化到O(capacity)\n\n---\n\n## 相关拓展\n\n### **类似题目**\n- **经典DP问题**：\n  - 最长递增子序列（LIS）\n  - 最长公共子序列（LCS）\n  - 编辑距离\n  - 矩阵链乘法\n  - 打家劫舍系列\n\n### **进阶知识**\n- **状态压缩DP**：用位运算优化状态表示\n- **区间DP**：按区间长度递推（如石子合并）\n- **树形DP**：在树结构上进行动态规划\n- **数位DP**：处理与数字各位相关的问题\n- **概率DP**：处理带有概率的决策问题\n\n### **常见错误**\n- **状态定义不清晰**：没有明确`dp[i]`的具体含义\n- **边界条件遗漏**：忘记处理特殊情况（如n=0, n=1）\n- **状态转移方程错误**：没有正确建立状态间的依赖关系\n- **数组越界**：访问了不存在的DP状态\n- **初始化错误**：初始值设置不当导致后续计算错误\n\n**避免方法**：\n1. 先手动模拟小规模例子\n2. 明确写出状态定义和转移方程\n3. 仔细检查边界条件\n4. 使用调试工具验证中间结果",
+      "metadata": {
+        "isRelevantToAlgorithm": false,
+        "confidenceScore": 0,
+        "vectorStored": false
+      },
+      "id": "1cd4e6f6-b826-4813-b195-76b5f3e452fd",
+      "timestamp": "2026-03-28T14:10:55.470653"
+    }
+  ]
+}
