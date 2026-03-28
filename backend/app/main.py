@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 
 from app.api.routes import router
 
@@ -94,8 +95,8 @@ def create_app() -> FastAPI:
 - Agent: 建议 10 秒内最多 1 次请求
         """,
         version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None,  # 禁用默认，使用自定义
+        redoc_url=None,  # 禁用默认，使用自定义
         openapi_tags=tags_metadata,
         contact={
             "name": "AlgoMate Team",
@@ -127,6 +128,27 @@ def create_app() -> FastAPI:
     
     # 注册路由
     app.include_router(router, prefix="/api")
+    
+    # 自定义 Swagger UI（使用国内 CDN）
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        return get_swagger_ui_html(
+            openapi_url="/openapi.json",
+            title="AlgoMate API - Swagger UI",
+            swagger_js_url="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.10.3/swagger-ui-bundle.min.js",
+            swagger_css_url="https://cdn.bootcdn.net/ajax/libs/swagger-ui/5.10.3/swagger-ui.min.css",
+            swagger_favicon_url="/favicon.svg",
+        )
+    
+    # 自定义 ReDoc（使用国内 CDN）
+    @app.get("/redoc", include_in_schema=False)
+    async def custom_redoc_html():
+        return get_redoc_html(
+            openapi_url="/openapi.json",
+            title="AlgoMate API - ReDoc",
+            redoc_js_url="https://cdn.bootcdn.net/ajax/libs/redoc/2.1.3/redoc.standalone.min.js",
+            redoc_favicon_url="/favicon.svg",
+        )
     
     return app
 
