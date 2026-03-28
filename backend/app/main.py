@@ -2,6 +2,20 @@
 # -*- coding: utf-8 -*-
 """
 AlgoMate FastAPI 入口
+
+AlgoMate - 智能算法辅导系统
+基于 LangGraph + ReAct 架构的智能 Agent 系统
+
+功能特性:
+- RAG (检索增强生成): 知识问答
+- Agent (智能体): 自动分析、编码、测试、修复
+- Session (会话管理): 持久化对话历史
+
+技术栈:
+- FastAPI
+- LangChain / LangGraph
+- ChromaDB (向量数据库)
+- SSE (服务器发送事件)
 """
 import os
 import sys
@@ -14,6 +28,30 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 
+# API 标签元数据
+tags_metadata = [
+    {
+        "name": "Health",
+        "description": "健康检查和系统状态",
+    },
+    {
+        "name": "Sessions",
+        "description": "会话管理 - 创建、查询、更新、删除会话",
+    },
+    {
+        "name": "RAG",
+        "description": "RAG (检索增强生成) - 知识库问答",
+    },
+    {
+        "name": "Agent",
+        "description": "智能 Agent - 自动分析题目、生成代码、执行测试、修复错误",
+    },
+    {
+        "name": "System",
+        "description": "系统配置和工具",
+    },
+]
+
 
 def create_app() -> FastAPI:
     """
@@ -24,10 +62,49 @@ def create_app() -> FastAPI:
     """
     app = FastAPI(
         title="AlgoMate API",
-        description="智能算法辅导系统 API - 基于 LangGraph + ReAct 架构",
+        description="""
+# AlgoMate 智能算法辅导系统
+
+基于 **LangGraph + ReAct** 架构的智能 Agent 系统
+
+## 核心功能
+
+### 1. RAG 模式 (知识问答)
+- 向量检索增强生成
+- 算法知识库查询
+- 流式响应 (SSE)
+
+### 2. Agent 模式 (智能解题)
+- 自动分析算法题目
+- 生成可执行代码 (Python/C++/Java)
+- 自动生成测试用例
+- 自动修复代码错误
+- ReAct 循环迭代
+
+### 3. Session 管理
+- 会话持久化
+- 消息历史记录
+- 自动标题生成
+
+## 认证
+当前版本无需认证，后续将添加 API Key 支持
+
+## 限流
+- RAG: 无限制
+- Agent: 建议 10 秒内最多 1 次请求
+        """,
         version="0.1.0",
         docs_url="/docs",
         redoc_url="/redoc",
+        openapi_tags=tags_metadata,
+        contact={
+            "name": "AlgoMate Team",
+            "url": "https://github.com/seiu12138/AlgoMate",
+        },
+        license_info={
+            "name": "MIT License",
+            "url": "https://opensource.org/licenses/MIT",
+        },
     )
     
     # 配置 CORS
@@ -58,29 +135,47 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-@app.get("/")
+@app.get("/", tags=["System"])
 async def root():
-    """根路径重定向到文档"""
+    """
+    根路径 - API 入口信息
+    
+    Returns:
+        API 基本信息和文档链接
+    """
     return {
         "message": "欢迎使用 AlgoMate API",
+        "version": "0.1.0",
         "docs": "/docs",
+        "redoc": "/redoc",
         "api": "/api",
         "health": "/api/health"
     }
 
 
-@app.get("/api")
+@app.get("/api", tags=["System"])
 async def api_root():
-    """API 根路径"""
+    """
+    API 根路径 - 端点概览
+    
+    Returns:
+        所有可用端点列表
+    """
     return {
         "service": "AlgoMate API",
         "version": "0.1.0",
         "endpoints": {
             "health": "/api/health",
             "config": "/api/config",
-            "rag_chat": "/api/rag/chat",
-            "agent_solve": "/api/agent/solve",
-            "session_clear": "/api/session/clear",
+            "sessions": {
+                "list": "GET /api/sessions",
+                "create": "POST /api/sessions",
+                "get": "GET /api/sessions/{id}",
+                "update": "PATCH /api/sessions/{id}",
+                "delete": "DELETE /api/sessions/{id}",
+            },
+            "rag_chat": "POST /api/rag/chat",
+            "agent_solve": "POST /api/agent/solve",
         }
     }
 

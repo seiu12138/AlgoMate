@@ -57,41 +57,51 @@ NODE_PROGRESS_MAP = {
 
 
 # ============ 健康检查 ============
-@router.get("/health")
+@router.get("/health", tags=["Health"])
 async def health_check():
-    """健康检查端点"""
+    """
+    健康检查端点
+    
+    用于监控服务运行状态
+    
+    Returns:
+        - status: "ok" 表示服务正常
+        - service: 服务名称
+    """
     return {"status": "ok", "service": "AlgoMate API"}
 
 
 # ============ Session Management ============
-@router.get("/sessions", response_model=SessionListResponse)
+@router.get("/sessions", response_model=SessionListResponse, tags=["Sessions"])
 async def list_sessions(
     type: str = Query(None, description="Filter by session type: rag | agent")
 ):
     """
     获取所有会话列表
     
-    Query Parameters:
-        - type: 可选，过滤会话类型 ("rag" 或 "agent")
+    获取所有会话的元数据列表，可按类型过滤
     
-    Response:
-        {"sessions": [session1, session2, ...]}
+    - **type**: 可选，过滤会话类型 ("rag" 或 "agent")
+    
+    Returns:
+        - sessions: 会话列表，按更新时间倒序排列
     """
     sessions = conversation_session_manager.list_sessions(session_type=type)
     return SessionListResponse(sessions=sessions)
 
 
-@router.post("/sessions", response_model=CreateSessionResponse)
+@router.post("/sessions", response_model=CreateSessionResponse, tags=["Sessions"])
 async def create_session(request: CreateSessionRequest):
     """
     创建新会话
     
-    Request Body:
-        - type: 会话类型 ("rag" 或 "agent")
-        - title: 可选，会话标题
+    创建一个新的对话会话
     
-    Response:
-        {"session": {"id": "...", "type": "...", "title": "...", ...}}
+    - **type**: 会话类型 ("rag" 或 "agent")
+    - **title**: 可选，会话标题，默认 "New Conversation"
+    
+    Returns:
+        - session: 新创建的会话信息
     """
     session = conversation_session_manager.create_session(
         session_type=request.type,
@@ -100,16 +110,21 @@ async def create_session(request: CreateSessionRequest):
     return CreateSessionResponse(session=session)
 
 
-@router.get("/sessions/{session_id}", response_model=SessionDetailResponse)
+@router.get("/sessions/{session_id}", response_model=SessionDetailResponse, tags=["Sessions"])
 async def get_session(session_id: str):
     """
     获取会话详情（包含消息）
     
-    Path Parameters:
-        - session_id: 会话ID
+    获取指定会话的完整信息，包括所有消息
     
-    Response:
-        {"session": {...}, "messages": [...]}
+    - **session_id**: 路径参数，会话ID
+    
+    Returns:
+        - session: 会话元数据
+        - messages: 消息列表
+        
+    Raises:
+        - 404: 会话不存在
     """
     session_data = conversation_session_manager.get_session(session_id)
     if not session_data:
@@ -121,31 +136,32 @@ async def get_session(session_id: str):
     )
 
 
-@router.delete("/sessions/{session_id}")
+@router.delete("/sessions/{session_id}", tags=["Sessions"])
 async def delete_session(session_id: str):
     """
     删除会话
     
-    Path Parameters:
-        - session_id: 会话ID
+    删除指定的会话及其所有消息
     
-    Response:
-        {"success": true, "message": "..."}
+    - **session_id**: 路径参数，会话ID
+    
+    Returns:
+        - success: 操作是否成功
+        - message: 操作结果消息
     """
     conversation_session_manager.delete_session(session_id)
     return {"success": True, "message": f"Session '{session_id}' deleted"}
 
 
-@router.patch("/sessions/{session_id}")
+@router.patch("/sessions/{session_id}", tags=["Sessions"])
 async def update_session(session_id: str, request: UpdateSessionRequest):
     """
     更新会话标题
     
-    Path Parameters:
-        - session_id: 会话ID
+    修改指定会话的标题
     
-    Request Body:
-        - title: 新标题
+    - **session_id**: 路径参数，会话ID
+    - **title**: 新标题
     
     Response:
         {"success": true, "message": "..."}
@@ -158,16 +174,17 @@ async def update_session(session_id: str, request: UpdateSessionRequest):
     return {"success": True, "message": f"Session '{session_id}' title updated"}
 
 
-@router.post("/sessions/{session_id}/summarize", response_model=SummaryResponse)
+@router.post("/sessions/{session_id}/summarize", response_model=SummaryResponse, tags=["Sessions"])
 async def generate_summary_endpoint(session_id: str):
     """
     生成会话摘要标题
     
-    Path Parameters:
-        - session_id: 会话ID
+    基于会话的第一条消息自动生成标题
     
-    Response:
-        {"title": "生成的标题"}
+    - **session_id**: 路径参数，会话ID
+    
+    Returns:
+        - title: 生成的标题
     """
     session_data = conversation_session_manager.get_session(session_id)
     if not session_data or not session_data.get("messages"):
@@ -313,20 +330,42 @@ async def rag_chat_stream_enhanced(
         }
 
 
-@router.post("/rag/chat")
+@router.post("/rag/chat", tags=["RAG"])
 async def rag_chat(request: RAGChatRequest):
     """
-    RAG 问答（流式 SSE，增强版，支持会话持久化）
+    RAG 问答（流式 SSE）
     
-    Request Body:
-        - message: 用户消息
-        - session_id: 会话ID（必需）
+    基于检索增强生成的知识问答
     
-    Response:
-        SSE Stream:
-        {"type": "token", "content": "..."}
-        {"type": "title_update", "title": "..."}  # 首次对话时
-        {"type": "done"}
+    ## 功能
+    - 向量检索相关知识
+    - 会话持久化
+    - 首次对话自动生成标题
+    
+    ## 请求参数
+    - **message**: 用户问题
+    - **session_id**: 会话ID（必需）
+    
+    ## 响应 (SSE 流)
+    - `{"type": "token", "content": "..."}` - 生成的文本片段
+    - `{"type": "title_update", "title": "..."}` - 首次对话时发送
+    - `{"type": "done"}` - 完成标记
+    
+    ## 示例
+    ```python
+    import requests
+    
+    response = requests.post(
+        "http://localhost:8000/api/rag/chat",
+        json={"message": "什么是动态规划？", "session_id": "xxx"},
+        stream=True
+    )
+    
+    for line in response.iter_lines():
+        if line.startswith(b"data: "):
+            data = json.loads(line[6:])
+            print(data)
+    ```
     """
     try:
         # Import here to avoid circular dependencies
@@ -569,24 +608,65 @@ async def agent_solve_stream_enhanced(
         }
 
 
-@router.post("/agent/solve")
+@router.post("/agent/solve", tags=["Agent"])
 async def agent_solve(request: AgentSolveRequest):
     """
-    Agent 解题（流式 SSE，增强版，支持会话持久化）
+    Agent 解题（流式 SSE）
     
-    Request Body:
-        - problem: 题目描述
-        - language: 编程语言（python/cpp/java，默认python）
-        - max_iterations: 最大迭代次数（1-10，默认5）
-        - session_id: 会话ID（必需）
+    智能 Agent 自动分析题目、生成代码、执行测试、修复错误
     
-    Response:
-        SSE Stream:
-        {"type": "node_start", "node": "analyze", "status": "🔍 分析题目..."}
-        {"type": "progress", "value": 15}
-        {"type": "node_complete", "node": "analyze", "output": {...}}
-        {"type": "title_update", "title": "..."}  # 首次对话时
-        {"type": "complete", "result": {...}}
+    ## 功能
+    - 自动分析算法题目
+    - 生成可执行代码 (Python/C++/Java)
+    - 自动生成测试用例
+    - 自动执行并验证
+    - 自动修复错误 (ReAct 循环)
+    - 会话持久化
+    
+    ## 请求参数
+    - **problem**: 题目描述
+    - **language**: 编程语言 ("python", "cpp", "java")，默认 "python"
+    - **max_iterations**: 最大迭代次数 (1-10)，默认 5
+    - **session_id**: 会话ID（必需）
+    
+    ## 响应 (SSE 流)
+    - `{"type": "node_start", "node": "analyze", "status": "..."}` - 节点开始
+    - `{"type": "progress", "value": 15}` - 进度更新 (0-100)
+    - `{"type": "node_complete", "node": "...", "output": {...}}` - 节点完成
+    - `{"type": "title_update", "title": "..."}` - 首次对话时发送
+    - `{"type": "complete", "result": {...}}` - 最终完成结果
+    - `{"type": "error", "message": "..."}` - 错误信息
+    
+    ## 执行流程
+    1. **analyze** - 分析题目
+    2. **generate_test_cases** - 生成测试用例
+    3. **validate_test_cases** - 验证测试用例
+    4. **generate_code** - 生成代码
+    5. **execute_code** - 执行代码
+    6. **analyze_result** - 分析结果
+    7. **fix_code** - 修复代码 (如需要)
+    8. **finish** - 生成最终答案
+    
+    ## 示例
+    ```python
+    import requests
+    
+    response = requests.post(
+        "http://localhost:8000/api/agent/solve",
+        json={
+            "problem": "两数之和：给定数组 nums 和 target...",
+            "language": "python",
+            "max_iterations": 5,
+            "session_id": "xxx"
+        },
+        stream=True
+    )
+    
+    for line in response.iter_lines():
+        if line.startswith(b"data: "):
+            data = json.loads(line[6:])
+            print(data)
+    ```
     """
     return EventSourceResponse(
         agent_solve_stream_enhanced(
@@ -601,16 +681,18 @@ async def agent_solve(request: AgentSolveRequest):
 
 
 # ============ 清空会话 ============
-@router.post("/session/clear")
+@router.post("/session/clear", tags=["Sessions"])
 async def session_clear(request: SessionClearRequest):
     """
     清空会话
     
-    Request Body:
-        - session_id: 会话ID（可选，默认"default"）
+    清空指定会话的运行时状态（不影响持久化存储的会话）
     
-    Response:
-        {"success": true, "message": "会话已清空"}
+    - **session_id**: 会话ID，默认 "default"
+    
+    Returns:
+        - success: 操作是否成功
+        - message: 操作结果消息
     """
     success = session_manager.clear_session(request.session_id)
     
@@ -627,16 +709,16 @@ async def session_clear(request: SessionClearRequest):
 
 
 # ============ 获取配置 ============
-@router.get("/config")
+@router.get("/config", tags=["System"])
 async def get_config():
     """
     获取配置信息
     
-    Response:
-        {
-            "languages": ["python", "cpp", "java"],
-            "max_iterations_range": [1, 10]
-        }
+    获取系统支持的编程语言和配置范围
+    
+    Returns:
+        - languages: 支持的编程语言列表
+        - max_iterations_range: 最大迭代次数范围 [min, max]
     """
     return {
         "languages": ["python", "cpp", "java"],
