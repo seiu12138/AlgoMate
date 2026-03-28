@@ -1,0 +1,20 @@
+[
+  {
+    "id": "918f59c6-23f0-4fd7-b106-e8d98b5890fc",
+    "type": "rag",
+    "title": "New Conversation",
+    "createdAt": "2026-03-28T13:35:00.763022",
+    "updatedAt": "2026-03-28T13:36:51.996025",
+    "messageCount": 4,
+    "lastMessagePreview": "# 打家劫舍问题详解\n\n## 问题理解\n\n用户询问的是经典的**打家劫舍问题（House Robbe..."
+  },
+  {
+    "id": "4150225b-6871-4a5a-89bf-cfc677843005",
+    "type": "rag",
+    "title": "New Conversation",
+    "createdAt": "2026-03-28T13:36:53.994205",
+    "updatedAt": "2026-03-28T13:36:53.994205",
+    "messageCount": 0,
+    "lastMessagePreview": ""
+  }
+]

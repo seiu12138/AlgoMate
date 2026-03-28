@@ -217,6 +217,9 @@ async def rag_chat_stream_enhanced(
             }
             return
         
+        # Check if this is the first message (for auto-title generation)
+        is_first_message = session_data["session"]["messageCount"] == 0
+        
         # 2. Store user message
         if conversation_rag:
             await conversation_rag.process_message(
@@ -260,7 +263,7 @@ async def rag_chat_stream_enhanced(
                 )
             
             # 6. Auto-generate summary if first message
-            if session_data["session"]["messageCount"] <= 1 and conversation_rag:
+            if is_first_message and conversation_rag:
                 try:
                     summary = await conversation_rag.generate_summary(message)
                     conversation_session_manager.update_title(session_id, summary)
@@ -392,6 +395,9 @@ async def agent_solve_stream_enhanced(
             }
             return
         
+        # Check if this is the first message (for auto-title generation)
+        is_first_message = session_data["session"]["messageCount"] == 0
+        
         # 2. Store user message
         conversation_session_manager.add_message(session_id, {
             "role": "user",
@@ -511,8 +517,7 @@ async def agent_solve_stream_enhanced(
         })
         
         # 9. Auto-generate title if first message
-        session_data = conversation_session_manager.get_session(session_id)
-        if session_data and session_data["session"]["messageCount"] <= 2:
+        if is_first_message:
             try:
                 # Simple title generation (first 30 chars)
                 title = problem[:30] + "..." if len(problem) > 30 else problem
