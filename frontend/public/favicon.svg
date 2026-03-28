@@ -17,11 +17,14 @@
     fill="none"
   />
   
-  <!-- 三条交织线 -->
+  <!-- 交织线 -->  
   <path
-    d="M16 11 L16 21 M16 13 L25 18.5 M16 13 L7 18.5"
+    d="M16 11 L16 21 M16 14 L25 18.5 M16 14 L7 18.5"
     stroke="url(#favAlgoGrad)"
     strokeWidth="2.5"
     strokeLinecap="round"
   />
+  
+  <!-- 决策节点 -->  
+  <circle cx="16" cy="14" r="2.5" fill="#0891B2"/>
 </svg>
