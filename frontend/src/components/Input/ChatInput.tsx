@@ -99,6 +99,10 @@ export function ChatInput() {
                                 updateLastMessage(event.result.final_answer);
                             }
                             break;
+                        case "title_update":
+                            // Update session title for agent mode
+                            updateSessionTitle(sessionId!, event.title);
+                            break;
                     }
                 }
 

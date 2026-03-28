@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { ConversationCard } from "./ConversationCard";
 import { useChatStore } from "../../stores/chatStore";
 import type { Mode } from "../../types";
@@ -9,6 +9,9 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ mode }: ConversationListProps) {
+    const [error, setError] = useState<string | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    
     const {
         sessions,
         currentSessionId,
@@ -21,20 +24,44 @@ export function ConversationList({ mode }: ConversationListProps) {
 
     // Load sessions on mount and when mode changes
     useEffect(() => {
-        loadSessions(mode);
+        loadSessions(mode).catch(err => {
+            setError("Failed to load sessions");
+            console.error(err);
+        });
     }, [mode, loadSessions]);
 
     const handleCreateSession = async () => {
-        await createSession(mode);
+        try {
+            setIsCreating(true);
+            setError(null);
+            await createSession(mode);
+        } catch (err) {
+            setError("Failed to create session");
+            console.error(err);
+        } finally {
+            setIsCreating(false);
+        }
     };
 
     const handleLoadSession = async (sessionId: string) => {
-        await loadSession(sessionId);
+        try {
+            setError(null);
+            await loadSession(sessionId);
+        } catch (err) {
+            setError("Failed to load session");
+            console.error(err);
+        }
     };
 
     const handleDeleteSession = async (sessionId: string) => {
         if (window.confirm("确定要删除这个会话吗？此操作不可恢复。")) {
-            await deleteSession(sessionId);
+            try {
+                setError(null);
+                await deleteSession(sessionId);
+            } catch (err) {
+                setError("Failed to delete session");
+                console.error(err);
+            }
         }
     };
 
@@ -49,18 +76,31 @@ export function ConversationList({ mode }: ConversationListProps) {
                 </h3>
                 <button
                     onClick={handleCreateSession}
+                    disabled={isCreating}
                     className="
                         flex items-center gap-1 px-2 py-1
                         text-xs font-medium text-blue-600
-                        bg-blue-50 hover:bg-blue-100
+                        bg-blue-50 hover:bg-blue-100 disabled:opacity-50
                         rounded-md transition-colors
                     "
                     title="新建会话"
                 >
-                    <Plus className="w-3.5 h-3.5" />
+                    {isCreating ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                        <Plus className="w-3.5 h-3.5" />
+                    )}
                     新建
                 </button>
             </div>
+
+            {/* Error message */}
+            {error && (
+                <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg text-red-600 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
 
             {/* Session list */}
             <div className="space-y-1 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">

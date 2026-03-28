@@ -7,11 +7,17 @@ import type {
     Language 
 } from "../types";
 
+export interface TitleUpdateEvent {
+    type: "title_update";
+    title: string;
+}
+
 export type AgentEvent = 
     | RAGTokenEvent 
     | AgentNodeStartEvent 
     | AgentProgressEvent 
-    | AgentCompleteEvent;
+    | AgentCompleteEvent
+    | TitleUpdateEvent;
 
 export async function* streamAgentChat(
     message: string,
