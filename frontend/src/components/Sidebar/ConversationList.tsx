@@ -24,10 +24,8 @@ export function ConversationList({ mode }: ConversationListProps) {
 
     // Load sessions on mount and when mode changes
     useEffect(() => {
-        loadSessions(mode).catch(err => {
-            setError("Failed to load sessions");
-            console.error(err);
-        });
+        // loadSessions will return empty array if backend is unavailable
+        loadSessions(mode);
     }, [mode, loadSessions]);
 
     const handleCreateSession = async () => {

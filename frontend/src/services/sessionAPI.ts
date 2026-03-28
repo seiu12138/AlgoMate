@@ -2,6 +2,36 @@ import type { Mode } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
+// Track backend availability to prevent repeated failed requests
+let isBackendAvailable = true;
+let lastBackendCheck = 0;
+const BACKEND_CHECK_INTERVAL = 5000; // 5 seconds
+
+async function checkBackendAvailability(): Promise<boolean> {
+    const now = Date.now();
+    if (now - lastBackendCheck < BACKEND_CHECK_INTERVAL) {
+        return isBackendAvailable;
+    }
+    
+    lastBackendCheck = now;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const response = await fetch(`${API_BASE}/health`, {
+            method: "GET",
+            signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        isBackendAvailable = response.ok;
+        return isBackendAvailable;
+    } catch {
+        isBackendAvailable = false;
+        return false;
+    }
+}
+
 export interface CreateSessionRequest {
     type: Mode;
     title?: string;
@@ -67,27 +97,68 @@ export const sessionAPI = {
     },
     
     async listSessions(type?: Mode): Promise<SessionListResponse> {
+        // Check backend availability first
+        if (!await checkBackendAvailability()) {
+            console.warn("[sessionAPI] Backend not available, returning empty sessions");
+            return { sessions: [] };
+        }
+        
         const url = type 
             ? `${API_BASE}/sessions?type=${type}` 
             : `${API_BASE}/sessions`;
         
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`Failed to list sessions: ${response.statusText}`);
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(url, {
+                signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to list sessions: ${response.statusText}`);
+            }
+            
+            return response.json();
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.name === "AbortError") {
+                    console.warn("[sessionAPI] Request timeout");
+                } else if ((error as any).code === "ECONNREFUSED" || error.message.includes("fetch")) {
+                    console.warn("[sessionAPI] Connection refused, backend may be down");
+                    isBackendAvailable = false;
+                }
+            }
+            // Return empty sessions on error
+            return { sessions: [] };
         }
-        
-        return response.json();
     },
     
-    async getSession(sessionId: string): Promise<SessionDetailResponse> {
-        const response = await fetch(`${API_BASE}/sessions/${sessionId}`);
-        
-        if (!response.ok) {
-            throw new Error(`Failed to get session: ${response.statusText}`);
+    async getSession(sessionId: string): Promise<SessionDetailResponse | null> {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            
+            const response = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+                signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    return null;
+                }
+                throw new Error(`Failed to get session: ${response.statusText}`);
+            }
+            
+            return response.json();
+        } catch (error) {
+            console.warn(`[sessionAPI] Failed to get session ${sessionId}:`, error);
+            return null;
         }
-        
-        return response.json();
     },
     
     async deleteSession(sessionId: string): Promise<void> {
@@ -123,4 +194,8 @@ export const sessionAPI = {
         
         return response.json();
     },
+    
+    // Check if backend is available
+    isBackendAvailable: () => isBackendAvailable,
+    checkBackendAvailability,
 };

@@ -168,12 +168,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         try {
             set({ isLoadingSessions: true });
             const response = await sessionAPI.listSessions(type);
+            // If backend is down, response.sessions will be empty
             set({ 
                 sessions: response.sessions,
                 isLoadingSessions: false,
             });
         } catch (error) {
-            console.error("Failed to load sessions:", error);
+            // Silently ignore errors - sessionAPI already logs them
             set({ isLoadingSessions: false });
         }
     },
