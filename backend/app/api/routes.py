@@ -347,7 +347,7 @@ async def rag_chat(request: RAGChatRequest):
         raise HTTPException(status_code=500, detail=error_detail)
 
 
-# ============ Agent 解题 ============
+# ============ Agent 解题（增强版） ============
 def serialize_state_value(value) -> any:
     """序列化状态值，处理不可序列化的对象"""
     if value is None:
@@ -362,26 +362,66 @@ def serialize_state_value(value) -> any:
     return str(value)
 
 
-async def agent_solve_stream(
+async def agent_solve_stream_enhanced(
     problem: str,
     language: str,
     max_iterations: int,
-    session_id: str
+    session_id: str,
+    enhanced_agent=None
 ) -> AsyncGenerator[dict, None]:
     """
-    Agent 解题流式生成器
+    Agent 解题流式生成器（增强版，支持会话持久化）
     
     Args:
         problem: 题目描述
         language: 编程语言
         max_iterations: 最大迭代次数
         session_id: 会话ID
+        enhanced_agent: EnhancedAgent实例
         
     Yields:
         SSE 事件字典
     """
     try:
-        # Get or create Agent
+        # 1. Validate session
+        session_data = conversation_session_manager.get_session(session_id)
+        if not session_data:
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "error", "message": "Session not found"}, ensure_ascii=False)
+            }
+            return
+        
+        # 2. Store user message
+        conversation_session_manager.add_message(session_id, {
+            "role": "user",
+            "content": problem
+        })
+        
+        # 3. Get RAG context if available
+        rag_context = ""
+        if enhanced_agent and enhanced_agent.conversation_rag:
+            try:
+                rag_context = await enhanced_agent.conversation_rag.get_enhanced_context(
+                    query=problem,
+                    session_id=session_id,
+                    k=3,
+                    max_history=5
+                )
+            except Exception as e:
+                print(f"Warning: Failed to get RAG context: {e}")
+        
+        # 4. Enhance problem with context
+        if rag_context:
+            enhanced_problem = f"""{problem}
+
+[Additional Context from Knowledge Base]
+{rag_context}
+"""
+        else:
+            enhanced_problem = problem
+        
+        # 5. Get or create Agent
         agent = session_manager.get_or_create_agent(session_id, max_iterations)
         
         # Send start event
@@ -394,8 +434,8 @@ async def agent_solve_stream(
             }, ensure_ascii=False)
         }
         
-        # Stream execution
-        for event in agent.solve_stream(problem, language, session_id):
+        # 6. Stream execution
+        for event in agent.solve_stream(enhanced_problem, language, session_id):
             for node_name, output in event.items():
                 if node_name == "__end__":
                     continue
@@ -439,7 +479,7 @@ async def agent_solve_stream(
                 # Small delay for frontend processing
                 await asyncio.sleep(0.05)
         
-        # Get final result
+        # 7. Get final result
         thread_config = {"configurable": {"thread_id": session_id}}
         final_state = agent.graph.get_state(thread_config)
         
@@ -457,9 +497,32 @@ async def agent_solve_stream(
         else:
             result = {"error": "未能获取最终状态"}
         
-        # Save result to session
-        session = session_manager.get_session(session_id)
-        session["agent_results"] = result
+        # 8. Store assistant response
+        conversation_session_manager.add_message(session_id, {
+            "role": "assistant",
+            "content": result.get("final_answer", ""),
+            "metadata": {
+                "generatedCode": result.get("generatedCode"),
+                "executionResult": result.get("execution_history", [])[-1] if result.get("execution_history") else None,
+                "isSolved": result.get("is_solved"),
+                "iterationCount": result.get("iteration_count"),
+                "language": language
+            }
+        })
+        
+        # 9. Auto-generate title if first message
+        session_data = conversation_session_manager.get_session(session_id)
+        if session_data and session_data["session"]["messageCount"] <= 2:
+            try:
+                # Simple title generation (first 30 chars)
+                title = problem[:30] + "..." if len(problem) > 30 else problem
+                conversation_session_manager.update_title(session_id, title)
+                yield {
+                    "event": "message",
+                    "data": json.dumps({"type": "title_update", "title": title}, ensure_ascii=False)
+                }
+            except Exception as e:
+                print(f"Warning: Failed to generate title: {e}")
         
         # Send completion event
         yield {
@@ -486,27 +549,29 @@ async def agent_solve_stream(
 @router.post("/agent/solve")
 async def agent_solve(request: AgentSolveRequest):
     """
-    Agent 解题（流式 SSE）
+    Agent 解题（流式 SSE，增强版，支持会话持久化）
     
     Request Body:
         - problem: 题目描述
         - language: 编程语言（python/cpp/java，默认python）
         - max_iterations: 最大迭代次数（1-10，默认5）
-        - session_id: 会话ID（可选，默认"default"）
+        - session_id: 会话ID（必需）
     
     Response:
         SSE Stream:
         {"type": "node_start", "node": "analyze", "status": "🔍 分析题目..."}
         {"type": "progress", "value": 15}
         {"type": "node_complete", "node": "analyze", "output": {...}}
+        {"type": "title_update", "title": "..."}  # 首次对话时
         {"type": "complete", "result": {...}}
     """
     return EventSourceResponse(
-        agent_solve_stream(
+        agent_solve_stream_enhanced(
             request.problem,
             request.language,
             request.max_iterations,
-            request.session_id
+            request.session_id,
+            enhanced_agent=None  # Will be initialized in the stream function
         ),
         media_type="text/event-stream"
     )
