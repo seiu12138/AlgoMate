@@ -7,7 +7,7 @@ import json
 import asyncio
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
@@ -15,12 +15,21 @@ from .schemas import (
     RAGChatRequest,
     AgentSolveRequest,
     SessionClearRequest,
-    ConfigResponse,
+    CreateSessionRequest,
+    UpdateSessionRequest,
+    CreateSessionResponse,
+    SessionListResponse,
+    SessionDetailResponse,
+    SummaryResponse,
 )
 from app.core.session import session_manager
+from app.core.session_manager import get_session_manager
 
 
 router = APIRouter()
+
+# Session manager instance
+conversation_session_manager = get_session_manager()
 
 
 # ============ 节点状态映射 ============
@@ -54,6 +63,132 @@ async def health_check():
     return {"status": "ok", "service": "AlgoMate API"}
 
 
+# ============ Session Management ============
+@router.get("/sessions", response_model=SessionListResponse)
+async def list_sessions(
+    type: str = Query(None, description="Filter by session type: rag | agent")
+):
+    """
+    获取所有会话列表
+    
+    Query Parameters:
+        - type: 可选，过滤会话类型 ("rag" 或 "agent")
+    
+    Response:
+        {"sessions": [session1, session2, ...]}
+    """
+    sessions = conversation_session_manager.list_sessions(session_type=type)
+    return SessionListResponse(sessions=sessions)
+
+
+@router.post("/sessions", response_model=CreateSessionResponse)
+async def create_session(request: CreateSessionRequest):
+    """
+    创建新会话
+    
+    Request Body:
+        - type: 会话类型 ("rag" 或 "agent")
+        - title: 可选，会话标题
+    
+    Response:
+        {"session": {"id": "...", "type": "...", "title": "...", ...}}
+    """
+    session = conversation_session_manager.create_session(
+        session_type=request.type,
+        title=request.title
+    )
+    return CreateSessionResponse(session=session)
+
+
+@router.get("/sessions/{session_id}", response_model=SessionDetailResponse)
+async def get_session(session_id: str):
+    """
+    获取会话详情（包含消息）
+    
+    Path Parameters:
+        - session_id: 会话ID
+    
+    Response:
+        {"session": {...}, "messages": [...]}
+    """
+    session_data = conversation_session_manager.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    return SessionDetailResponse(
+        session=session_data["session"],
+        messages=session_data.get("messages", [])
+    )
+
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """
+    删除会话
+    
+    Path Parameters:
+        - session_id: 会话ID
+    
+    Response:
+        {"success": true, "message": "..."}
+    """
+    conversation_session_manager.delete_session(session_id)
+    return {"success": True, "message": f"Session '{session_id}' deleted"}
+
+
+@router.patch("/sessions/{session_id}")
+async def update_session(session_id: str, request: UpdateSessionRequest):
+    """
+    更新会话标题
+    
+    Path Parameters:
+        - session_id: 会话ID
+    
+    Request Body:
+        - title: 新标题
+    
+    Response:
+        {"success": true, "message": "..."}
+    """
+    session_data = conversation_session_manager.get_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    conversation_session_manager.update_title(session_id, request.title)
+    return {"success": True, "message": f"Session '{session_id}' title updated"}
+
+
+@router.post("/sessions/{session_id}/summarize", response_model=SummaryResponse)
+async def generate_summary(session_id: str):
+    """
+    生成会话摘要标题
+    
+    Path Parameters:
+        - session_id: 会话ID
+    
+    Response:
+        {"title": "生成的标题"}
+    """
+    session_data = conversation_session_manager.get_session(session_id)
+    if not session_data or not session_data.get("messages"):
+        return SummaryResponse(title="New Conversation")
+    
+    # Get first user message for summary
+    first_message = None
+    for msg in session_data["messages"]:
+        if msg.get("role") == "user":
+            first_message = msg.get("content", "")
+            break
+    
+    if not first_message:
+        return SummaryResponse(title="New Conversation")
+    
+    # TODO: Use LLM to generate summary
+    # For now, use truncated first message
+    title = first_message[:30] + "..." if len(first_message) > 30 else first_message
+    return SummaryResponse(title=title)
+
+
 # ============ RAG 问答 ============
 async def rag_chat_stream(message: str, session_id: str) -> AsyncGenerator[dict, None]:
     """
@@ -70,7 +205,7 @@ async def rag_chat_stream(message: str, session_id: str) -> AsyncGenerator[dict,
         session = session_manager.get_session(session_id)
         rag_service = session["rag"]
         
-        # 使用 RAG chain 的 stream 方法
+        # Use RAG chain's stream method
         async for chunk in rag_service.chain.astream(
             {"input": message},
             config={"configurable": {"session_id": session_id}}
@@ -81,7 +216,7 @@ async def rag_chat_stream(message: str, session_id: str) -> AsyncGenerator[dict,
                     "data": json.dumps({"type": "token", "content": chunk}, ensure_ascii=False)
                 }
         
-        # 发送完成事件
+        # Send completion event
         yield {
             "event": "message",
             "data": json.dumps({"type": "done"}, ensure_ascii=False)
@@ -148,10 +283,10 @@ async def agent_solve_stream(
         SSE 事件字典
     """
     try:
-        # 获取或创建 Agent
+        # Get or create Agent
         agent = session_manager.get_or_create_agent(session_id, max_iterations)
         
-        # 发送开始事件
+        # Send start event
         yield {
             "event": "message",
             "data": json.dumps({
@@ -161,13 +296,13 @@ async def agent_solve_stream(
             }, ensure_ascii=False)
         }
         
-        # 流式执行
+        # Stream execution
         for event in agent.solve_stream(problem, language, session_id):
             for node_name, output in event.items():
                 if node_name == "__end__":
                     continue
                 
-                # 发送节点开始事件
+                # Send node start event
                 status = NODE_STATUS_MAP.get(node_name, f"⏳ {node_name}...")
                 yield {
                     "event": "message",
@@ -178,7 +313,7 @@ async def agent_solve_stream(
                     }, ensure_ascii=False)
                 }
                 
-                # 发送进度事件
+                # Send progress event
                 progress = NODE_PROGRESS_MAP.get(node_name, 50)
                 yield {
                     "event": "message",
@@ -188,12 +323,12 @@ async def agent_solve_stream(
                     }, ensure_ascii=False)
                 }
                 
-                # 序列化输出
+                # Serialize output
                 serialized_output = {}
                 if isinstance(output, dict):
                     serialized_output = {k: serialize_state_value(v) for k, v in output.items()}
                 
-                # 发送节点完成事件
+                # Send node complete event
                 yield {
                     "event": "message",
                     "data": json.dumps({
@@ -203,10 +338,10 @@ async def agent_solve_stream(
                     }, ensure_ascii=False)
                 }
                 
-                # 小延迟，让前端有时间处理
+                # Small delay for frontend processing
                 await asyncio.sleep(0.05)
         
-        # 获取最终结果
+        # Get final result
         thread_config = {"configurable": {"thread_id": session_id}}
         final_state = agent.graph.get_state(thread_config)
         
@@ -224,11 +359,11 @@ async def agent_solve_stream(
         else:
             result = {"error": "未能获取最终状态"}
         
-        # 保存结果到会话
+        # Save result to session
         session = session_manager.get_session(session_id)
         session["agent_results"] = result
         
-        # 发送完成事件
+        # Send completion event
         yield {
             "event": "message",
             "data": json.dumps({
@@ -306,7 +441,7 @@ async def session_clear(request: SessionClearRequest):
 
 
 # ============ 获取配置 ============
-@router.get("/config", response_model=ConfigResponse)
+@router.get("/config")
 async def get_config():
     """
     获取配置信息
@@ -317,4 +452,7 @@ async def get_config():
             "max_iterations_range": [1, 10]
         }
     """
-    return ConfigResponse()
+    return {
+        "languages": ["python", "cpp", "java"],
+        "max_iterations_range": [1, 10]
+    }

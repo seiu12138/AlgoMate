@@ -2,6 +2,7 @@ import { GraduationCap } from "lucide-react";
 import { ModeSelector } from "./ModeSelector";
 import { AgentConfig } from "./AgentConfig";
 import { ActionButtons } from "./ActionButtons";
+import { ConversationList } from "./ConversationList";
 import { useChatStore } from "../../stores/chatStore";
 import { useConfigStore } from "../../stores/configStore";
 
@@ -29,14 +30,21 @@ export function Sidebar() {
                 {/* 模式选择 */}
                 <ModeSelector mode={mode} onModeChange={setMode} />
 
+                {/* 会话列表 */}
+                <div className="border-t border-white/30 pt-4">
+                    <ConversationList mode={mode} />
+                </div>
+
                 {/* Agent 配置 - 仅在 Agent 模式下显示 */}
                 {mode === "agent" && (
-                    <AgentConfig
-                        language={language}
-                        maxIterations={maxIterations}
-                        onLanguageChange={setLanguage}
-                        onMaxIterationsChange={setMaxIterations}
-                    />
+                    <div className="border-t border-white/30 pt-4">
+                        <AgentConfig
+                            language={language}
+                            maxIterations={maxIterations}
+                            onLanguageChange={setLanguage}
+                            onMaxIterationsChange={setMaxIterations}
+                        />
+                    </div>
                 )}
             </div>
 

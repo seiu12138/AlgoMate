@@ -64,3 +64,27 @@ export interface AgentConfig {
     language: Language;
     maxIterations: number;
 }
+
+// Conversation Session
+export interface ConversationSession {
+    id: string;
+    type: Mode;
+    title: string;
+    createdAt: string;
+    updatedAt: string;
+    messageCount: number;
+    lastMessagePreview: string;
+}
+
+export interface ConversationMessage {
+    id: string;
+    sessionId: string;
+    role: "user" | "assistant" | "system";
+    content: string;
+    timestamp: string;
+    metadata?: {
+        isRelevantToAlgorithm?: boolean;
+        confidenceScore?: number;
+        vectorStored?: boolean;
+    };
+}

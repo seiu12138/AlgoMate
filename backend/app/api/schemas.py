@@ -78,3 +78,38 @@ class SSEError(SSEMessage):
     """错误消息"""
     type: Literal["error"] = "error"
     message: str = Field(..., description="错误信息")
+
+
+# ============ Session Management Models ============
+
+
+class CreateSessionRequest(BaseModel):
+    """创建会话请求"""
+    type: Literal["rag", "agent"] = Field(..., description="会话类型: rag 或 agent")
+    title: Optional[str] = Field(default=None, description="会话标题（可选）")
+
+
+class CreateSessionResponse(BaseModel):
+    """创建会话响应"""
+    session: dict = Field(..., description="会话信息")
+
+
+class SessionListResponse(BaseModel):
+    """会话列表响应"""
+    sessions: List[dict] = Field(default_factory=list, description="会话列表")
+
+
+class SessionDetailResponse(BaseModel):
+    """会话详情响应"""
+    session: dict = Field(..., description="会话元数据")
+    messages: List[dict] = Field(default_factory=list, description="消息列表")
+
+
+class UpdateSessionRequest(BaseModel):
+    """更新会话请求"""
+    title: str = Field(..., description="新标题")
+
+
+class SummaryResponse(BaseModel):
+    """生成摘要响应"""
+    title: str = Field(..., description="生成的标题")
