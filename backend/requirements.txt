@@ -1,0 +1,29 @@
+# AlgoMate Backend 依赖
+
+# FastAPI 生态
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+sse-starlette>=2.0.0
+pydantic>=2.0.0
+
+# LangChain 生态
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langgraph>=0.1.0
+
+# 向量数据库
+chromadb>=0.4.0
+
+# 嵌入模型
+# dashscope for Tongyi embeddings
+
+# 可选：Docker 沙箱
+# docker>=6.0.0
+
+# 开发工具
+pytest>=7.0.0
+httpx>=0.27.0
+
+# 配置管理
+pyyaml>=6.0.0

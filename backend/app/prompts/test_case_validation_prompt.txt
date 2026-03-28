@@ -1,0 +1,38 @@
+验证测试用例的正确性。
+
+当前代码：
+```python
+{code}
+```
+
+执行结果：
+- 成功: {success}
+- 标准输出: {stdout}
+- 错误输出: {stderr}
+
+测试用例：
+{test_cases}
+
+题目分析：
+{problem_analysis}
+
+请分析以下问题：
+1. 测试用例的期望值是否正确？（请根据题目要求重新计算验证）
+2. 代码的输出格式是否符合题目要求？
+3. 如果测试用例期望值有误，请提供正确的期望值
+
+请以 JSON 格式返回：
+```json
+{{
+    "test_cases_valid": true/false,
+    "issues": [
+        {{
+            "test_index": 0,
+            "issue_type": "wrong_expected/format_error/other",
+            "description": "问题描述",
+            "suggested_fix": "建议的修正值"
+        }}
+    ],
+    "overall_assessment": "总体评估：测试用例正确/测试用例有误但代码正确/代码需要修复"
+}}
+```

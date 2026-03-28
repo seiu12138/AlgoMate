@@ -1,0 +1,7 @@
+# 存储路径配置
+
+# md5文件存储路径
+md5_path: "./data/md5.text"
+
+# 记忆历史存储路径
+history_path: "./data/chat_history"
