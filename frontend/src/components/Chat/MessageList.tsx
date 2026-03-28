@@ -88,7 +88,7 @@ export function MessageList() {
     if (messages.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                <div className="mb-6">
+                <div className="mb-6 text-slate-800">
                     <AlgoMateLogo size={80} />
                 </div>
                 <h2 className="text-2xl font-bold gradient-title mb-3">
