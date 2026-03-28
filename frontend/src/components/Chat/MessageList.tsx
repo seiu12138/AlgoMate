@@ -11,7 +11,7 @@ export function MessageList() {
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [isUserScrolling, setIsUserScrolling] = useState(false);
     const lastMessageCountRef = useRef(messages.length);
-    const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // 获取消息容器（父元素的滚动容器）
     const getScrollContainer = () => {

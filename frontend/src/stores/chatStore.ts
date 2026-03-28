@@ -190,16 +190,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
     
     updateSessionTitle: async (sessionId: string, title: string) => {
+        // Optimistic update: update local state first
+        set((state) => ({
+            sessions: state.sessions.map(s =>
+                s.id === sessionId ? { ...s, title } : s
+            ),
+        }));
+        
+        // Then sync with backend
         try {
             await sessionAPI.updateSession(sessionId, title);
-            set((state) => ({
-                sessions: state.sessions.map(s =>
-                    s.id === sessionId ? { ...s, title } : s
-                ),
-            }));
         } catch (error) {
-            console.error("Failed to update session title:", error);
-            throw error;
+            console.error("Failed to update session title on server:", error);
+            // Don't throw error, local state is already updated
         }
     },
 }));

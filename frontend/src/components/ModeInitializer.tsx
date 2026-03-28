@@ -6,7 +6,7 @@ import { useChatStore } from "../stores/chatStore";
  * This is a headless component that doesn't render anything
  */
 export function ModeInitializer() {
-    const { mode, loadSessions, loadRecentSession, currentSessionId } = useChatStore();
+    const { mode, loadSessions, loadRecentSession } = useChatStore();
     const initialized = useRef(false);
     const prevMode = useRef(mode);
 

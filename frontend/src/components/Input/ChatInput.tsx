@@ -32,7 +32,9 @@ export function ChatInput() {
         // Ensure we have a session
         let sessionId = currentSessionId;
         if (!sessionId) {
+            console.log("[ChatInput] No session, creating new one...");
             sessionId = await createSession(mode);
+            console.log("[ChatInput] Created session:", sessionId);
         }
 
         const userMessage: Message = {
@@ -59,21 +61,32 @@ export function ChatInput() {
 
         try {
             if (mode === "rag") {
+                console.log("[ChatInput] Starting RAG chat, sessionId:", sessionId);
                 // RAG streaming response
                 let fullContent = "";
+                let titleUpdated = false;
                 for await (const event of streamRAGChat(userMessage.content, sessionId!)) {
+                    console.log("[ChatInput] RAG event:", event.type);
                     if (event.type === "token") {
                         fullContent += event.content;
                         updateLastMessage(fullContent);
                     } else if (event.type === "title_update") {
+                        console.log("[ChatInput] Received title_update:", event.title);
+                        titleUpdated = true;
                         // Update session title when received from backend
-                        updateSessionTitle(sessionId!, event.title);
+                        await updateSessionTitle(sessionId!, event.title);
+                        console.log("[ChatInput] Title updated successfully");
                     }
                 }
+                if (!titleUpdated) {
+                    console.warn("[ChatInput] No title_update event received!");
+                }
             } else {
+                console.log("[ChatInput] Starting Agent chat, sessionId:", sessionId);
                 // Agent streaming response
                 let fullContent = "";
                 let agentResult: AgentResult | undefined;
+                let titleUpdated = false;
 
                 for await (const event of streamAgentChat(
                     userMessage.content,
@@ -81,6 +94,7 @@ export function ChatInput() {
                     language,
                     maxIterations
                 )) {
+                    console.log("[ChatInput] Agent event:", event.type);
                     switch (event.type) {
                         case "token":
                             fullContent += event.content;
@@ -100,10 +114,16 @@ export function ChatInput() {
                             }
                             break;
                         case "title_update":
+                            console.log("[ChatInput] Received title_update:", event.title);
+                            titleUpdated = true;
                             // Update session title for agent mode
-                            updateSessionTitle(sessionId!, event.title);
+                            await updateSessionTitle(sessionId!, event.title);
+                            console.log("[ChatInput] Title updated successfully");
                             break;
                     }
+                }
+                if (!titleUpdated) {
+                    console.warn("[ChatInput] No title_update event received!");
                 }
 
                 if (agentResult) {
@@ -111,7 +131,7 @@ export function ChatInput() {
                 }
             }
         } catch (error) {
-            console.error("Chat error:", error);
+            console.error("[ChatInput] Chat error:", error);
             updateLastMessage("抱歉，发生了错误。请稍后重试。");
         } finally {
             setLoading(false);

@@ -281,6 +281,18 @@ async def rag_chat_stream_enhanced(
                     print(f"Warning: Failed to generate summary: {e}")
         else:
             # Fallback: simple response without RAG
+            # Still generate title if first message
+            if is_first_message:
+                try:
+                    summary = message[:30] + "..." if len(message) > 30 else message
+                    conversation_session_manager.update_title(session_id, summary)
+                    yield {
+                        "event": "message",
+                        "data": json.dumps({"type": "title_update", "title": summary}, ensure_ascii=False)
+                    }
+                except Exception as e:
+                    print(f"Warning: Failed to generate summary: {e}")
+            
             yield {
                 "event": "message",
                 "data": json.dumps({"type": "error", "message": "RAG service not available"}, ensure_ascii=False)
