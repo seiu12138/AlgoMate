@@ -1,14 +1,11 @@
-import type { RAGTokenEvent, SSEEvent } from "../types";
+import type { RAGTokenEvent, TitleUpdateEvent } from "../types";
 
-export interface TitleUpdateEvent {
-    type: "title_update";
-    title: string;
-}
+export type RAGEvent = RAGTokenEvent | TitleUpdateEvent;
 
 export async function* streamRAGChat(
     message: string, 
     sessionId: string
-): AsyncGenerator<RAGTokenEvent | TitleUpdateEvent> {
+): AsyncGenerator<RAGEvent> {
     const response = await fetch("http://localhost:8000/api/rag/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,9 +33,11 @@ export async function* streamRAGChat(
         for (const line of lines) {
             if (line.startsWith("data: ")) {
                 try {
-                    const data: SSEEvent | TitleUpdateEvent = JSON.parse(line.slice(6));
-                    if (data.type === "token" || data.type === "title_update") {
-                        yield data;
+                    const data = JSON.parse(line.slice(6));
+                    if (data.type === "token") {
+                        yield data as RAGTokenEvent;
+                    } else if (data.type === "title_update") {
+                        yield data as TitleUpdateEvent;
                     }
                 } catch (e) {
                     console.error("Failed to parse SSE data:", e);

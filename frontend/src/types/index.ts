@@ -57,7 +57,12 @@ export interface AgentCompleteEvent {
     result: AgentResult;
 }
 
-export type SSEEvent = RAGTokenEvent | AgentNodeStartEvent | AgentProgressEvent | AgentCompleteEvent;
+export interface TitleUpdateEvent {
+    type: "title_update";
+    title: string;
+}
+
+export type SSEEvent = RAGTokenEvent | AgentNodeStartEvent | AgentProgressEvent | AgentCompleteEvent | TitleUpdateEvent;
 
 // Agent 配置
 export interface AgentConfig {

@@ -75,6 +75,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
     // Session actions
     createSession: async (type: Mode) => {
         try {
+            // Check for empty session to reuse
+            const { sessions } = get();
+            const emptySession = sessions.find(
+                s => s.type === type && s.messageCount === 0
+            );
+            
+            if (emptySession) {
+                // Reuse existing empty session
+                set({
+                    currentSessionId: emptySession.id,
+                    messages: [],
+                });
+                return emptySession.id;
+            }
+            
+            // Create new session
             const response = await sessionAPI.createSession(type);
             const session = response.session;
             set((state) => ({
@@ -93,6 +109,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         try {
             set({ isLoadingSessions: true });
             const response = await sessionAPI.getSession(sessionId);
+            
+            // If no messages, clear current messages
+            if (!response.messages || response.messages.length === 0) {
+                set({
+                    currentSessionId: sessionId,
+                    messages: [],
+                    mode: response.session.type,
+                    isLoadingSessions: false,
+                });
+                return;
+            }
             
             // Convert backend messages to frontend format
             const messages: Message[] = response.messages.map((msg: any) => ({

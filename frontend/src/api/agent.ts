@@ -3,14 +3,9 @@ import type {
     AgentNodeStartEvent, 
     AgentProgressEvent, 
     AgentCompleteEvent,
-    SSEEvent,
+    TitleUpdateEvent,
     Language 
 } from "../types";
-
-export interface TitleUpdateEvent {
-    type: "title_update";
-    title: string;
-}
 
 export type AgentEvent = 
     | RAGTokenEvent 
@@ -57,7 +52,7 @@ export async function* streamAgentChat(
         for (const line of lines) {
             if (line.startsWith("data: ")) {
                 try {
-                    const data: SSEEvent = JSON.parse(line.slice(6));
+                    const data = JSON.parse(line.slice(6));
                     yield data as AgentEvent;
                 } catch (e) {
                     console.error("Failed to parse SSE data:", e);

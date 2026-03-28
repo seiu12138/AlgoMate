@@ -263,9 +263,15 @@ async def rag_chat_stream_enhanced(
                 )
             
             # 6. Auto-generate summary if first message
-            if is_first_message and conversation_rag:
+            if is_first_message:
                 try:
-                    summary = await conversation_rag.generate_summary(message)
+                    # Try to use LLM for summary if available
+                    if conversation_rag:
+                        summary = await conversation_rag.generate_summary(message)
+                    else:
+                        # Fallback: truncate first message
+                        summary = message[:30] + "..." if len(message) > 30 else message
+                    
                     conversation_session_manager.update_title(session_id, summary)
                     yield {
                         "event": "message",
