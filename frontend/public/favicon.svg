@@ -1,30 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <defs>
-    <linearGradient id="favAiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#10B981"/>
-      <stop offset="100%" stopColor="#3B82F6"/>
+    <linearGradient id="favAlgoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#0891B2"/>
+      <stop offset="100%" stopColor="#059669"/>
     </linearGradient>
   </defs>
   
   <!-- 深色背景 -->           
-  <rect width="32" height="32" rx="8" fill="#111827"/>
+  <rect width="32" height="32" rx="8" fill="#0F172A"/>
   
   <!-- 六边形 -->  
   <path
-    d="M16 6 L25 11 L25 21 L16 26 L7 21 L7 11 Z"
-    stroke="url(#favAiGradient)"
-    strokeWidth="2"
+    d="M16 6 L26 11.5 L26 20.5 L16 26 L6 20.5 L6 11.5 Z"
+    stroke="url(#favAlgoGrad)"
+    strokeWidth="2.5"
     fill="none"
   />
   
-  <!-- 交织线条 -->
+  <!-- 三条交织线 -->
   <path
-    d="M16 11 L16 21 M16 14 L12 16.5 L12 20.5 M16 14 L20 16.5 L20 20.5"
-    stroke="url(#favAiGradient)"
-    strokeWidth="2"
+    d="M16 11 L16 21 M16 13 L25 18.5 M16 13 L7 18.5"
+    stroke="url(#favAlgoGrad)"
+    strokeWidth="2.5"
     strokeLinecap="round"
   />
-  
-  <!-- 中心 -->
-  <circle cx="16" cy="16" r="2.5" fill="url(#favAiGradient)"/>
 </svg>
