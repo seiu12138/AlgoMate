@@ -159,7 +159,7 @@ async def update_session(session_id: str, request: UpdateSessionRequest):
 
 
 @router.post("/sessions/{session_id}/summarize", response_model=SummaryResponse)
-async def generate_summary(session_id: str):
+async def generate_summary_endpoint(session_id: str):
     """
     生成会话摘要标题
     
@@ -183,38 +183,99 @@ async def generate_summary(session_id: str):
     if not first_message:
         return SummaryResponse(title="New Conversation")
     
-    # TODO: Use LLM to generate summary
-    # For now, use truncated first message
+    # Use truncated first message as fallback
     title = first_message[:30] + "..." if len(first_message) > 30 else first_message
     return SummaryResponse(title=title)
 
 
-# ============ RAG 问答 ============
-async def rag_chat_stream(message: str, session_id: str) -> AsyncGenerator[dict, None]:
+# ============ RAG 问答（增强版） ============
+async def rag_chat_stream_enhanced(
+    message: str, 
+    session_id: str,
+    conversation_rag=None,
+    rag_service=None
+) -> AsyncGenerator[dict, None]:
     """
-    RAG 聊天流式生成器
+    RAG 聊天流式生成器（增强版，支持会话持久化）
     
     Args:
         message: 用户消息
         session_id: 会话ID
+        conversation_rag: ConversationRAG实例
+        rag_service: RAG服务实例
         
     Yields:
         SSE 事件字典
     """
     try:
-        session = session_manager.get_session(session_id)
-        rag_service = session["rag"]
+        # 1. Validate session exists
+        session_data = conversation_session_manager.get_session(session_id)
+        if not session_data:
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "error", "message": "Session not found"}, ensure_ascii=False)
+            }
+            return
         
-        # Use RAG chain's stream method
-        async for chunk in rag_service.chain.astream(
-            {"input": message},
-            config={"configurable": {"session_id": session_id}}
-        ):
-            if chunk:
-                yield {
-                    "event": "message",
-                    "data": json.dumps({"type": "token", "content": chunk}, ensure_ascii=False)
-                }
+        # 2. Store user message
+        if conversation_rag:
+            await conversation_rag.process_message(
+                session_id=session_id,
+                message=message,
+                role="user",
+                skip_vector_store=True  # Don't store user messages in vector DB
+            )
+        
+        # 3. Get enhanced context (vector DB + session history)
+        enhanced_context = ""
+        if conversation_rag:
+            enhanced_context = await conversation_rag.get_enhanced_context(
+                query=message,
+                session_id=session_id,
+                k=3,
+                max_history=5
+            )
+        
+        # 4. Generate response with context using RAG service
+        if rag_service:
+            # Use existing RAG service with enhanced context
+            full_response = ""
+            async for chunk in rag_service.chain.astream(
+                {"input": message, "context": enhanced_context},
+                config={"configurable": {"session_id": session_id}}
+            ):
+                if chunk:
+                    full_response += chunk
+                    yield {
+                        "event": "message",
+                        "data": json.dumps({"type": "token", "content": chunk}, ensure_ascii=False)
+                    }
+            
+            # 5. Store assistant response with relevance check
+            if conversation_rag:
+                await conversation_rag.process_message(
+                    session_id=session_id,
+                    message=full_response,
+                    role="assistant"
+                )
+            
+            # 6. Auto-generate summary if first message
+            if session_data["session"]["messageCount"] <= 1 and conversation_rag:
+                try:
+                    summary = await conversation_rag.generate_summary(message)
+                    conversation_session_manager.update_title(session_id, summary)
+                    yield {
+                        "event": "message",
+                        "data": json.dumps({"type": "title_update", "title": summary}, ensure_ascii=False)
+                    }
+                except Exception as e:
+                    print(f"Warning: Failed to generate summary: {e}")
+        else:
+            # Fallback: simple response without RAG
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "error", "message": "RAG service not available"}, ensure_ascii=False)
+            }
         
         # Send completion event
         yield {
@@ -223,30 +284,67 @@ async def rag_chat_stream(message: str, session_id: str) -> AsyncGenerator[dict,
         }
         
     except Exception as e:
+        import traceback
+        error_msg = f"{str(e)}\n{traceback.format_exc()}"
         yield {
             "event": "message",
-            "data": json.dumps({"type": "error", "message": str(e)}, ensure_ascii=False)
+            "data": json.dumps({"type": "error", "message": str(e), "detail": error_msg}, ensure_ascii=False)
         }
 
 
 @router.post("/rag/chat")
 async def rag_chat(request: RAGChatRequest):
     """
-    RAG 问答（流式 SSE）
+    RAG 问答（流式 SSE，增强版，支持会话持久化）
     
     Request Body:
         - message: 用户消息
-        - session_id: 会话ID（可选，默认"default"）
+        - session_id: 会话ID（必需）
     
     Response:
         SSE Stream:
         {"type": "token", "content": "..."}
+        {"type": "title_update", "title": "..."}  # 首次对话时
         {"type": "done"}
     """
-    return EventSourceResponse(
-        rag_chat_stream(request.message, request.session_id),
-        media_type="text/event-stream"
-    )
+    try:
+        # Import here to avoid circular dependencies
+        from app.rag.conversation_rag import get_conversation_rag
+        
+        # Get RAG service from session manager
+        session = session_manager.get_session(request.session_id)
+        rag_service = session.get("rag") if session else None
+        
+        # Get ConversationRAG instance
+        try:
+            conversation_rag = get_conversation_rag()
+        except ValueError:
+            # Initialize if not exists (need vector_store and llm)
+            if rag_service:
+                from app.rag.conversation_rag import ConversationRAG
+                # Extract vector_store and llm from existing RAG service
+                vector_store = getattr(rag_service, 'vector_service', None)
+                llm = getattr(rag_service, 'chat_model', None)
+                if vector_store and llm:
+                    conversation_rag = ConversationRAG(vector_store, llm)
+                else:
+                    conversation_rag = None
+            else:
+                conversation_rag = None
+        
+        return EventSourceResponse(
+            rag_chat_stream_enhanced(
+                request.message, 
+                request.session_id,
+                conversation_rag=conversation_rag,
+                rag_service=rag_service
+            ),
+            media_type="text/event-stream"
+        )
+    except Exception as e:
+        import traceback
+        error_detail = f"{str(e)}\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 # ============ Agent 解题 ============

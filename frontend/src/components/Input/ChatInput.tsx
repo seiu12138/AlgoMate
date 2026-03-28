@@ -13,19 +13,27 @@ export function ChatInput() {
     const { 
         mode, 
         isLoading, 
-        sessionId, 
+        currentSessionId, 
         addMessage, 
         setLoading, 
         updateLastMessage,
         updateLastMessageAgentResult,
         setAgentProgress,
-        setAgentStatus 
+        setAgentStatus,
+        updateSessionTitle,
+        createSession
     } = useChatStore();
     
     const { language, maxIterations } = useConfigStore();
 
     const handleSubmit = useCallback(async () => {
         if (!input.trim() || isLoading) return;
+
+        // Ensure we have a session
+        let sessionId = currentSessionId;
+        if (!sessionId) {
+            sessionId = await createSession(mode);
+        }
 
         const userMessage: Message = {
             id: `msg_${Date.now()}`,
@@ -40,7 +48,7 @@ export function ChatInput() {
         setAgentProgress(0);
         setAgentStatus("");
 
-        // 添加 AI 消息占位
+        // Add AI message placeholder
         const aiMessage: Message = {
             id: `msg_${Date.now() + 1}`,
             role: "assistant",
@@ -51,22 +59,25 @@ export function ChatInput() {
 
         try {
             if (mode === "rag") {
-                // RAG 流式响应
+                // RAG streaming response
                 let fullContent = "";
-                for await (const event of streamRAGChat(userMessage.content, sessionId)) {
+                for await (const event of streamRAGChat(userMessage.content, sessionId!)) {
                     if (event.type === "token") {
                         fullContent += event.content;
                         updateLastMessage(fullContent);
+                    } else if (event.type === "title_update") {
+                        // Update session title when received from backend
+                        updateSessionTitle(sessionId!, event.title);
                     }
                 }
             } else {
-                // Agent 流式响应
+                // Agent streaming response
                 let fullContent = "";
                 let agentResult: AgentResult | undefined;
 
                 for await (const event of streamAgentChat(
                     userMessage.content,
-                    sessionId,
+                    sessionId!,
                     language,
                     maxIterations
                 )) {
@@ -83,7 +94,7 @@ export function ChatInput() {
                             break;
                         case "complete":
                             agentResult = event.result;
-                            // 将 final_answer 设置到消息内容
+                            // Set final_answer to message content
                             if (event.result?.final_answer) {
                                 updateLastMessage(event.result.final_answer);
                             }
@@ -107,7 +118,7 @@ export function ChatInput() {
         input, 
         mode, 
         isLoading, 
-        sessionId, 
+        currentSessionId, 
         language, 
         maxIterations,
         addMessage, 
@@ -115,7 +126,9 @@ export function ChatInput() {
         updateLastMessage,
         updateLastMessageAgentResult,
         setAgentProgress,
-        setAgentStatus
+        setAgentStatus,
+        updateSessionTitle,
+        createSession
     ]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
