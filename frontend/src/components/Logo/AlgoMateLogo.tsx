@@ -4,8 +4,8 @@ interface AlgoMateLogoProps {
 }
 
 /**
- * AlgoMate Logo - 学习 × AI × 算法
- * 核心概念：AI 导师带领学习算法，点亮思维
+ * AlgoMate Logo - 专业简洁版
+ * 核心概念：算法决策树 + 深度学习网络
  */
 export function AlgoMateLogo({ size = 80, className = "" }: AlgoMateLogoProps) {
     return (
@@ -18,96 +18,74 @@ export function AlgoMateLogo({ size = 80, className = "" }: AlgoMateLogoProps) {
             className={className}
         >
             <defs>
-                {/* 智慧蓝渐变 */}
-                <linearGradient id="learnGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#3B82F6" />
-                    <stop offset="50%" stopColor="#6366F1" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
+                {/* 专业蓝灰渐变 */}
+                <linearGradient id="proGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#0F172A" />
+                    <stop offset="50%" stopColor="#1E3A5F" />
+                    <stop offset="100%" stopColor="#3B82F6" />
                 </linearGradient>
                 
-                {/* 灵光渐变 */}
-                <radialGradient id="glowGradient" cx="50%" cy="30%" r="50%">
-                    <stop offset="0%" stopColor="#FEF3C7" />
-                    <stop offset="100%" stopColor="#F59E0B" />
+                {/* 节点渐变 */}
+                <radialGradient id="nodeGradient" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#60A5FA" />
+                    <stop offset="100%" stopColor="#3B82F6" />
                 </radialGradient>
 
-                {/* 柔和发光 */}
-                <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="2" result="blur"/>
-                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-                </filter>
+                {/* 连接线渐变 */}
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#1E3A5F" />
+                    <stop offset="100%" stopColor="#60A5FA" />
+                </linearGradient>
             </defs>
 
-            {/* 书本底座 - 知识基础 */}
+            {/* 外框 - 六边形，象征稳定和结构 */}
             <path
-                d="M20 55 L20 62 Q20 66 25 66 L55 66 Q60 66 60 62 L60 55 Q60 58 55 58 L25 58 Q20 58 20 55 Z"
-                fill="url(#learnGradient)"
-                opacity="0.9"
+                d="M40 8 L64 20 L64 52 L40 64 L16 52 L16 20 Z"
+                stroke="url(#proGradient)"
+                strokeWidth="2"
+                fill="none"
+                opacity="0.3"
             />
+
+            {/* 决策树/算法结构 */}
+            {/* 根节点 */}
+            <circle cx="40" cy="20" r="5" fill="url(#proGradient)" />
+            
+            {/* 第一层分支 */}
+            <line x1="40" y1="25" x2="28" y2="36" stroke="url(#lineGradient)" strokeWidth="2" />
+            <line x1="40" y1="25" x2="52" y2="36" stroke="url(#lineGradient)" strokeWidth="2" />
+            
+            {/* 第一层节点 */}
+            <circle cx="28" cy="36" r="4" fill="url(#nodeGradient)" />
+            <circle cx="52" cy="36" r="4" fill="url(#nodeGradient)" />
+
+            {/* 第二层分支 */}
+            <line x1="28" y1="40" x2="22" y2="50" stroke="url(#lineGradient)" strokeWidth="1.5" />
+            <line x1="28" y1="40" x2="34" y2="50" stroke="url(#lineGradient)" strokeWidth="1.5" />
+            <line x1="52" y1="40" x2="46" y2="50" stroke="url(#lineGradient)" strokeWidth="1.5" />
+            <line x1="52" y1="40" x2="58" y2="50" stroke="url(#lineGradient)" strokeWidth="1.5" />
+
+            {/* 第二层节点 - 叶子节点 */}
+            <circle cx="22" cy="50" r="3" fill="#60A5FA" />
+            <circle cx="34" cy="50" r="3" fill="#60A5FA" />
+            <circle cx="46" cy="50" r="3" fill="#60A5FA" />
+            <circle cx="58" cy="50" r="3" fill="#60A5FA" />
+
+            {/* 中央 A 字母 - 抽象几何 */}
             <path
-                d="M20 55 Q20 51 25 51 L55 51 Q60 51 60 55 L60 58 Q60 62 55 62 L25 62 Q20 62 20 58 Z"
-                fill="url(#learnGradient)"
+                d="M40 30 L34 44 L36 44 L38 40 L42 40 L44 44 L46 44 L40 30 Z M39 38 L40 34 L41 38 L39 38 Z"
+                fill="#0F172A"
             />
-            {/* 书页线条 */}
-            <line x1="28" y1="54" x2="52" y2="54" stroke="white" strokeWidth="1.5" opacity="0.6" strokeLinecap="round"/>
-            <line x1="28" y1="57" x2="48" y2="57" stroke="white" strokeWidth="1.5" opacity="0.4" strokeLinecap="round"/>
 
-            {/* AI 导师 - 圆形头部 */}
-            <circle cx="40" cy="35" r="14" fill="#F8FAFC" stroke="url(#learnGradient)" strokeWidth="2.5"/>
-            
-            {/* 眼睛 - 专注学习的眼神 */}
-            <ellipse cx="35" cy="33" rx="3" ry="3.5" fill="#1E293B"/>
-            <ellipse cx="45" cy="33" rx="3" ry="3.5" fill="#1E293B"/>
-            {/* 眼神光点 */}
-            <circle cx="36" cy="32" r="1" fill="white"/>
-            <circle cx="46" cy="32" r="1" fill="white"/>
-            
-            {/* 微笑 - 友好导师 */}
-            <path d="M35 40 Q40 44, 45 40" stroke="#1E293B" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-
-            {/* 灵光/灯泡 - 思维启发 */}
-            <g transform="translate(40, 14)">
-                {/* 光芒 */}
-                <line x1="0" y1="-8" x2="0" y2="-4" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="-6" y1="-6" x2="-3" y2="-3" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="6" y1="-6" x2="3" y2="-3" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
-                
-                {/* 灯泡 */}
-                <circle cx="0" cy="0" r="4" fill="url(#glowGradient)" filter="url(#softGlow)"/>
-            </g>
-
-            {/* 算法符号 - 代码片段 */}
-            <g transform="translate(52, 38)">
-                <text x="0" y="0" fontSize="8" fill="#6366F1" fontFamily="monospace" fontWeight="bold">&lt;/&gt;</text>
-            </g>
-
-            {/* 左侧装饰 - 二进制/数据流 */}
-            <g transform="translate(18, 35)">
-                <rect x="0" y="0" width="3" height="3" fill="#3B82F6" opacity="0.8"/>
-                <rect x="0" y="5" width="3" height="3" fill="#3B82F6" opacity="0.5"/>
-                <rect x="4" y="2" width="3" height="3" fill="#3B82F6" opacity="0.3"/>
-            </g>
-
-            {/* 底部标签 */}
-            <text 
-                x="40" 
-                y="76" 
-                fontSize="5" 
-                fill="#64748B" 
-                textAnchor="middle" 
-                fontFamily="system-ui, sans-serif"
-                fontWeight="600"
-                letterSpacing="0.5"
-            >
-                LEARN · CODE · SOLVE
-            </text>
+            {/* 底部装饰线 */}
+            <line x1="25" y1="58" x2="55" y2="58" stroke="#3B82F6" strokeWidth="1" opacity="0.5" />
         </svg>
     );
 }
 
 /**
- * 简化版 Logo - Sidebar 使用
- * 书本 + AI 脸 + 灵光
+ * 简化版 Logo - Sidebar
+ * 六边形 + 中心 A
  */
 export function AlgoMateLogoSimple({ size = 32, className = "" }: AlgoMateLogoProps) {
     return (
@@ -120,37 +98,25 @@ export function AlgoMateLogoSimple({ size = 32, className = "" }: AlgoMateLogoPr
             className={className}
         >
             <defs>
-                <linearGradient id="simpleLearnGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#3B82F6" />
-                    <stop offset="100%" stopColor="#8B5CF6" />
+                <linearGradient id="simpleProGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#1E3A5F" />
+                    <stop offset="100%" stopColor="#3B82F6" />
                 </linearGradient>
             </defs>
 
-            {/* 书本 */}
+            {/* 六边形外框 */}
             <path
-                d="M6 22 L6 26 Q6 28 9 28 L23 28 Q26 28 26 26 L26 22"
-                stroke="url(#simpleLearnGradient)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                fill="none"
-            />
-            <path
-                d="M6 22 Q6 20 9 20 L23 20 Q26 20 26 22"
-                stroke="url(#simpleLearnGradient)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+                d="M16 4 L26 9 L26 23 L16 28 L6 23 L6 9 Z"
+                stroke="url(#simpleProGradient)"
+                strokeWidth="2"
                 fill="none"
             />
 
-            {/* AI 脸 */}
-            <circle cx="16" cy="14" r="6" fill="white" stroke="url(#simpleLearnGradient)" strokeWidth="2"/>
-            <circle cx="14" cy="13" r="1.5" fill="#1E293B"/>
-            <circle cx="18" cy="13" r="1.5" fill="#1E293B"/>
-            <path d="M13 17 Q16 19, 19 17" stroke="#1E293B" strokeWidth="1" strokeLinecap="round" fill="none"/>
-
-            {/* 灵光 */}
-            <circle cx="16" cy="5" r="2" fill="#F59E0B"/>
-            <line x1="16" y1="2" x2="16" y2="3" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* 中心 A */}
+            <path
+                d="M16 10 L13 20 H15 L15.5 18 H18.5 L19 20 H21 L18 10 H16 Z M16 16 L16.5 14 H17.5 L18 16 H16 Z"
+                fill="url(#simpleProGradient)"
+            />
         </svg>
     );
 }
