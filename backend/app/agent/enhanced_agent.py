@@ -24,6 +24,15 @@ class EnhancedAgent:
     """
     
     def __init__(self, llm, session_manager=None, conversation_rag=None, max_iterations: int = 5):
+        """
+        初始化增强型 Agent
+
+        Args:
+            llm: 大语言模型实例
+            session_manager: 会话管理器实例，默认使用全局实例
+            conversation_rag: RAG 服务实例，可选
+            max_iterations: 最大迭代次数，默认 5
+        """
         self.llm = llm
         self.session_manager = session_manager or get_session_manager()
         self.conversation_rag = conversation_rag
@@ -48,15 +57,15 @@ Respond with ONLY the title."""),
         language: str = "python"
     ) -> Dict[str, Any]:
         """
-        Process a coding problem with RAG-enhanced context.
-        
+        处理编程题目（同步模式）
+
         Args:
-            problem_description: The coding problem description
-            session_id: Session ID for persistence
-            language: Programming language (python/cpp/java)
-            
+            problem_description: 题目描述
+            session_id: 会话ID（用于持久化）
+            language: 编程语言（python/cpp/java），默认 python
+
         Returns:
-            Agent result dictionary
+            Agent 执行结果字典，包含 final_answer、generated_code、is_solved 等
         """
         # 1. Store user message
         self.session_manager.add_message(session_id, {
@@ -150,10 +159,15 @@ Respond with ONLY the title."""),
         language: str = "python"
     ):
         """
-        Process a coding problem with streaming output.
-        
+        处理编程题目（流式模式）
+
+        Args:
+            problem_description: 题目描述
+            session_id: 会话ID（用于持久化）
+            language: 编程语言（python/cpp/java），默认 python
+
         Yields:
-            Events during processing
+            处理过程中的事件字典
         """
         # 1. Store user message
         self.session_manager.add_message(session_id, {
@@ -240,7 +254,15 @@ Respond with ONLY the title."""),
         yield result
     
     async def _generate_summary(self, problem: str) -> str:
-        """Generate a summary title for the agent conversation."""
+        """
+        生成会话标题
+
+        Args:
+            problem: 问题描述
+
+        Returns:
+            生成的标题
+        """
         if not problem or len(problem.strip()) < 5:
             return "Coding Problem"
         
@@ -259,7 +281,20 @@ _enhanced_agent: Optional[EnhancedAgent] = None
 
 
 def get_enhanced_agent(llm=None, session_manager=None, conversation_rag=None) -> EnhancedAgent:
-    """Get or create global EnhancedAgent instance."""
+    """
+    获取全局 EnhancedAgent 实例
+
+    Args:
+        llm: 大语言模型实例（首次初始化必需）
+        session_manager: 会话管理器实例，可选
+        conversation_rag: RAG 服务实例，可选
+
+    Returns:
+        EnhancedAgent 单例实例
+
+    Raises:
+        ValueError: 首次初始化时缺少 llm 参数
+    """
     global _enhanced_agent
     if _enhanced_agent is None:
         if llm is None:

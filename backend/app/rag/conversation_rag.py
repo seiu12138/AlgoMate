@@ -25,6 +25,15 @@ class ConversationRAG:
     """
     
     def __init__(self, vector_store, llm, similarity_threshold: float = 0.85, min_confidence: float = 0.6):
+        """
+        初始化 ConversationRAG
+
+        Args:
+            vector_store: 向量数据库实例
+            llm: 大语言模型实例
+            similarity_threshold: 相似度阈值，默认 0.85
+            min_confidence: 最小置信度，默认 0.6
+        """
         self.vector_store = vector_store
         self.llm = llm
         self.session_manager = get_session_manager()
@@ -52,12 +61,18 @@ Respond with ONLY a JSON object:
     
     async def should_store_in_vector_db(self, content: str) -> Dict[str, Any]:
         """
-        Determine if content should be stored in vector DB.
-        
-        Logic:
-        1. Check similarity with existing documents
-        2. If very similar (> threshold), don't store
-        3. Otherwise, use LLM to judge relevance
+        判断内容是否应该存入向量数据库
+
+        逻辑：
+        1. 检查与现有文档的相似度
+        2. 如果相似度超过阈值，不存储
+        3. 否则使用 LLM 判断相关性
+
+        Args:
+            content: 待判断的内容
+
+        Returns:
+            包含 shouldStore、confidenceScore、reason 的字典
         """
         try:
             # Retrieve similar documents
@@ -108,9 +123,16 @@ Respond with ONLY a JSON object:
             }
     
     async def _async_similarity_search(self, query: str, k: int = 3) -> List[Dict[str, Any]]:
-        """Async wrapper for similarity search"""
-        # This is a synchronous operation in most vector stores
-        # We'll run it in a way that doesn't block
+        """
+        异步相似度搜索包装器
+
+        Args:
+            query: 查询文本
+            k: 返回结果数量，默认 3
+
+        Returns:
+            相似文档列表
+        """
         import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -126,16 +148,16 @@ Respond with ONLY a JSON object:
         skip_vector_store: bool = False
     ) -> Dict[str, Any]:
         """
-        Process a message: store session, optionally add to vector DB.
-        
+        处理消息：存入会话，可选存入向量数据库
+
         Args:
-            session_id: Session ID
-            message: Message content
-            role: 'user' or 'assistant'
-            skip_vector_store: If True, skip vector storage check
-            
+            session_id: 会话ID
+            message: 消息内容
+            role: 角色（"user" 或 "assistant"）
+            skip_vector_store: 是否跳过向量存储检查
+
         Returns:
-            Message metadata including vector storage decision
+            包含向量存储决策的消息元数据
         """
         # 1. Create message object
         message_obj = {
@@ -172,7 +194,14 @@ Respond with ONLY a JSON object:
         return message_obj
     
     async def _add_to_vector_store(self, text: str, session_id: str, confidence_score: float):
-        """Add text to vector store with metadata"""
+        """
+        将文本添加到向量数据库
+
+        Args:
+            text: 文本内容
+            session_id: 会话ID
+            confidence_score: 置信度分数
+        """
         import asyncio
         loop = asyncio.get_event_loop()
         
@@ -196,16 +225,16 @@ Respond with ONLY a JSON object:
         max_history: int = 5
     ) -> str:
         """
-        Get RAG-enhanced context combining vector DB and session history.
-        
+        获取增强上下文（向量数据库 + 会话历史）
+
         Args:
-            query: Query text
-            session_id: Current session ID
-            k: Number of vector DB results
-            max_history: Number of recent messages from session history
-            
+            query: 查询文本
+            session_id: 当前会话ID
+            k: 向量数据库返回结果数量，默认 3
+            max_history: 会话历史消息数量，默认 5
+
         Returns:
-            Combined context string
+            合并后的上下文字符串
         """
         # 1. Retrieve from vector DB
         vector_results = []
@@ -247,13 +276,13 @@ Respond with ONLY a JSON object:
     
     async def generate_summary(self, first_message: str) -> str:
         """
-        Generate a conversation summary title based on the first message.
-        
+        生成会话摘要标题
+
         Args:
-            first_message: First user message
-            
+            first_message: 第一条用户消息
+
         Returns:
-            Generated title (3-5 words)
+            生成的标题（前30字符）
         """
         if not first_message or len(first_message.strip()) < 2:
             return "New Conversation"
@@ -271,7 +300,19 @@ _conversation_rag: Optional[ConversationRAG] = None
 
 
 def get_conversation_rag(vector_store=None, llm=None) -> ConversationRAG:
-    """Get or create global ConversationRAG instance"""
+    """
+    获取全局 ConversationRAG 实例
+
+    Args:
+        vector_store: 向量数据库实例（首次初始化必需）
+        llm: 大语言模型实例（首次初始化必需）
+
+    Returns:
+        ConversationRAG 单例实例
+
+    Raises:
+        ValueError: 首次初始化时缺少必需参数
+    """
     global _conversation_rag
     if _conversation_rag is None:
         if vector_store is None or llm is None:
