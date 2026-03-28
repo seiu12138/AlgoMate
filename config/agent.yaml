@@ -1,7 +1,0 @@
-# Agent配置
-
-# 默认最大迭代次数
-max_iterations: 5
-
-# 代码执行超时时间（秒）
-code_execution_timeout: 10

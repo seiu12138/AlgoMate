@@ -1,6 +1,0 @@
-# 会话配置
-
-# 默认会话配置
-session_config:
-  configurable:
-    session_id: "user_001"

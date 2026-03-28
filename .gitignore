@@ -1,10 +1,4 @@
-# ============================================
-# AlgoMate Project - Git Ignore File
-# ============================================
-
-# ----------------------------------------
 # Python
-# ----------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,170 +16,44 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# ----------------------------------------
-# Virtual Environments
-# ----------------------------------------
+# Virtual Environment
 venv/
-.venv/
-env/
 ENV/
-env.bak/
-venv.bak/
-.python-version
+env/
+.venv/
 
-# ----------------------------------------
-# Testing & Coverage
-# ----------------------------------------
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# ----------------------------------------
-# IDEs & Editors
-# ----------------------------------------
-# PyCharm / IntelliJ
+# IDEs
 .idea/
-*.iml
-*.iws
-*.ipr
-out/
-
-# VS Code
 .vscode/
-*.code-workspace
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
 *.swp
 *.swo
 *~
 
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-
-# ----------------------------------------
-# OS Generated Files
-# ----------------------------------------
-# macOS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs_v*.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-
-# Linux
-*~
-.nfs*
-
-# ----------------------------------------
-# Environment & Secrets
-# ----------------------------------------
+# Environment variables
 .env
 .env.local
 .env.*.local
-.env.development
-.env.test
-.env.production
-!.env.example
-
-# API Keys & Credentials
-*.key
-*.pem
-*.crt
-secrets.yaml
-secrets.json
-
-# ----------------------------------------
-# AlgoMate Project Specific
-# ----------------------------------------
-
-# Chroma Vector Database (rebuildable)
-data/chromd_db/
-data/chroma_db/
-
-# MD5 records (rebuildable)
-data/md5.text
-data/*.text
-
-# Chat history (user data)
-data/chat_history/
 
 # Logs
-logs/
+logs/*.log
+logs/**/*.log
 *.log
 
-# Uploaded knowledge files (user data)
-data/knowledge_base/*.pdf
-data/knowledge_base/*.txt
-!data/knowledge_base/.gitkeep
+# Data files
+backend/app/data/chat_history/
+backend/app/data/chromd_db/
+!backend/app/data/knowledge_base/.gitkeep
 
-# Sandbox temp files
-sandbox/temp/
-sandbox/tmp/
-temp/
-tmp/
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
 
-# Model downloads
-models/
-*.bin
-*.gguf
-
-# ----------------------------------------
-# Documentation Build
-# ----------------------------------------
-docs/_build/
-site/
-
-# ----------------------------------------
-# Markdown Files (keep only README.md)
-# ----------------------------------------
-*.md
-*.MD
-!README.md
-!readme.md
-
-# ----------------------------------------
-# Misc
-# ----------------------------------------
-*.bak
-*.tmp
-*.temp
-*.orig
-*.rej
-
-# ----------------------------------------
-# Keep Directory Structure
-# ----------------------------------------
-# 使用 .gitkeep 保持空目录结构
-!.gitkeep
+# OS
+.DS_Store
+Thumbs.db
