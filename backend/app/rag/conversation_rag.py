@@ -24,20 +24,20 @@ class ConversationRAG:
     - Retrieves from both vector DB and session history
     """
     
-    def __init__(self, vector_store, llm, similarity_threshold: float = 0.85, min_confidence: float = 0.6):
+    def __init__(self, vector_store, llm, distance_threshold: float = 0.5, min_confidence: float = 0.3):
         """
         初始化 ConversationRAG
 
         Args:
             vector_store: 向量数据库实例
             llm: 大语言模型实例
-            similarity_threshold: 相似度阈值，默认 0.85
-            min_confidence: 最小置信度，默认 0.6
+            distance_threshold: 距离阈值（L2距离），默认 0.5，越小表示越相似
+            min_confidence: 最小置信度，默认 0.3
         """
         self.vector_store = vector_store
         self.llm = llm
         self.session_manager = get_session_manager()
-        self.similarity_threshold = similarity_threshold
+        self.distance_threshold = distance_threshold  # L2 距离阈值
         self.min_confidence = min_confidence
         
         # Prompt for relevance checking
@@ -79,14 +79,13 @@ Respond with ONLY a JSON object:
             similar_docs = await self._async_similarity_search(content, k=3)
             
             if similar_docs:
-                # Check similarity scores from metadata
-                for doc in similar_docs:
-                    score = doc.get('score', 0)
-                    if score > self.similarity_threshold:
+                # Check distance scores (L2 distance: smaller = more similar)
+                for doc, distance in similar_docs:
+                    if distance < self.distance_threshold:
                         return {
                             "shouldStore": False,
-                            "confidenceScore": score,
-                            "reason": f"High similarity ({score:.2f}) with existing content"
+                            "confidenceScore": 1.0 - distance,  # Convert to confidence
+                            "reason": f"Duplicate found (L2 distance={distance:.2f})"
                         }
             
             # Use LLM to judge relevance
@@ -101,6 +100,8 @@ Respond with ONLY a JSON object:
                 # Only store if relevant and confidence > threshold
                 should_store = is_relevant and confidence > self.min_confidence
                 
+                print(f"[VectorDB] Relevance check: is_relevant={is_relevant}, confidence={confidence:.2f}, threshold={self.min_confidence}, will_store={should_store}")
+                
                 return {
                     "shouldStore": should_store,
                     "confidenceScore": confidence,
@@ -108,6 +109,7 @@ Respond with ONLY a JSON object:
                 }
             except json.JSONDecodeError:
                 # Default to storing if parsing fails
+                print(f"[VectorDB] Relevance check: JSON parsing failed, defaulting to store")
                 return {
                     "shouldStore": True,
                     "confidenceScore": 0.5,
@@ -134,6 +136,14 @@ Respond with ONLY a JSON object:
             相似文档列表
         """
         import asyncio
+        
+        # Truncate query to fit embedding model limit (2048 tokens)
+        # Chinese characters may need 2-3 tokens each, so use conservative limit
+        max_chars = 1500
+        if len(query) > max_chars:
+            print(f"[VectorDB] Truncating search query: {len(query)} -> {max_chars} chars")
+            query = query[:max_chars]
+        
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
             None, 
@@ -166,56 +176,173 @@ Respond with ONLY a JSON object:
             "metadata": {}
         }
         
-        # 2. For assistant messages, check if should store in vector DB
-        if role == "assistant" and not skip_vector_store:
-            relevance_check = await self.should_store_in_vector_db(message)
+        # 2. Store message in vector DB if not skipped
+        if not skip_vector_store:
+            should_store = True
+            confidence_score = 1.0
             
-            if relevance_check["shouldStore"]:
-                # Store in vector DB with metadata
+            # For assistant messages, check relevance
+            if role == "assistant":
+                relevance_check = await self.should_store_in_vector_db(message)
+                should_store = relevance_check["shouldStore"]
+                confidence_score = relevance_check["confidenceScore"]
+                message_obj["metadata"] = {
+                    "isRelevantToAlgorithm": should_store,
+                    "confidenceScore": confidence_score,
+                    "vectorStored": should_store
+                }
+            
+            if should_store:
                 try:
                     await self._add_to_vector_store(
                         text=message,
                         session_id=session_id,
-                        confidence_score=relevance_check["confidenceScore"]
+                        confidence_score=confidence_score,
+                        role=role
                     )
+                    print(f"[VectorDB] Successfully stored {role} message ({len(message)} chars)")
                 except Exception as e:
-                    print(f"Warning: Failed to store in vector DB: {e}")
-            
-            # Update message metadata
-            message_obj["metadata"] = {
-                "isRelevantToAlgorithm": relevance_check["shouldStore"],
-                "confidenceScore": relevance_check["confidenceScore"],
-                "vectorStored": relevance_check["shouldStore"]
-            }
+                    print(f"[VectorDB] Failed to store {role} message: {e}")
+            else:
+                print(f"[VectorDB] Skipped storing {role} message (did not pass relevance check)")
         
         # 3. Add to session storage
         self.session_manager.add_message(session_id, message_obj)
         
         return message_obj
     
-    async def _add_to_vector_store(self, text: str, session_id: str, confidence_score: float):
+    async def process_message_async(
+        self, 
+        session_id: str, 
+        message: str, 
+        role: str = "assistant"
+    ) -> None:
         """
-        将文本添加到向量数据库
+        异步处理消息并存储到向量数据库（后台任务，不阻塞主流程）
+        
+        特点：
+        - 只存储助手回复，忽略用户消息
+        - 存储前进行相似度检查（去重）
+        - 允许数据丢失，异常被静默处理
+        
+        Args:
+            session_id: 会话ID
+            message: 消息内容（应为助手回复）
+            role: 角色，必须为 "assistant"
+        """
+        # Only store assistant messages
+        if role != "assistant":
+            return
+        
+        try:
+            # 1. Check for duplicates via similarity search
+            similar_docs = await self._async_similarity_search(message, k=1)
+            if similar_docs:
+                # Extract distance from result tuple (doc, distance)
+                # L2 distance: smaller = more similar
+                distance = similar_docs[0][1] if isinstance(similar_docs[0], tuple) else float('inf')
+                if distance < self.distance_threshold:
+                    print(f"[VectorDB] Skip storing (duplicate found, L2 distance={distance:.2f})")
+                    return
+            
+            # 2. Check relevance
+            relevance_check = await self.should_store_in_vector_db(message)
+            if not relevance_check["shouldStore"]:
+                print(f"[VectorDB] Skip storing (not relevant, confidence={relevance_check['confidenceScore']:.2f})")
+                return
+            
+            # 3. Store in vector DB
+            await self._add_to_vector_store(
+                text=message,
+                session_id=session_id,
+                confidence_score=relevance_check["confidenceScore"],
+                role=role
+            )
+            print(f"[VectorDB] Stored assistant response ({len(message)} chars)")
+            
+        except Exception as e:
+            # Silently fail - data loss is acceptable for background storage
+            print(f"[VectorDB] Failed to store (ignored): {e}")
+    
+    async def _add_to_vector_store(self, text: str, session_id: str, confidence_score: float, role: str = "assistant"):
+        """
+        将文本添加到向量数据库（支持分块存储）
 
         Args:
             text: 文本内容
             session_id: 会话ID
             confidence_score: 置信度分数
+            role: 角色（"user" 或 "assistant"）
         """
         import asyncio
         loop = asyncio.get_event_loop()
         
-        metadata = {
+        # Split text into chunks if too long (max 1500 chars per chunk)
+        max_chars = 1500
+        chunks = []
+        
+        if len(text) <= max_chars:
+            chunks = [text]
+        else:
+            # Split by paragraphs first, then by sentences if needed
+            paragraphs = text.split('\n\n')
+            current_chunk = ""
+            
+            for para in paragraphs:
+                if len(current_chunk) + len(para) + 2 <= max_chars:
+                    current_chunk += (para + '\n\n')
+                else:
+                    # Save current chunk if not empty
+                    if current_chunk:
+                        chunks.append(current_chunk.strip())
+                    
+                    # If paragraph itself is too long, split by sentences
+                    if len(para) > max_chars:
+                        sentences = para.replace('。', '。|').replace('. ', '.|').split('|')
+                        current_chunk = ""
+                        for sent in sentences:
+                            if len(current_chunk) + len(sent) + 1 <= max_chars:
+                                current_chunk += (sent + ' ')
+                            else:
+                                if current_chunk:
+                                    chunks.append(current_chunk.strip())
+                                current_chunk = sent + ' '
+                    else:
+                        current_chunk = para + '\n\n'
+            
+            # Don't forget the last chunk
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+        
+        # Store each chunk with metadata
+        texts = []
+        metadatas = []
+        base_metadata = {
             "sessionId": session_id,
             "type": "conversation",
+            "source": f"rag_{role}",
+            "role": role,
             "confidenceScore": confidence_score,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "totalChunks": len(chunks)
         }
+        
+        for i, chunk in enumerate(chunks):
+            texts.append(chunk)
+            metadata = base_metadata.copy()
+            metadata["chunkIndex"] = i + 1
+            metadata["isPartial"] = len(chunks) > 1
+            metadatas.append(metadata)
         
         await loop.run_in_executor(
             None,
-            lambda: self.vector_store.add_texts([text], [metadata])
+            lambda: self.vector_store.add_texts(texts, metadatas)
         )
+        
+        if len(chunks) > 1:
+            print(f"[VectorDB] Stored {len(chunks)} chunks (total {len(text)} chars)")
+        else:
+            print(f"[VectorDB] Stored 1 chunk ({len(text)} chars)")
     
     async def get_enhanced_context(
         self, 

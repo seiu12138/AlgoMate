@@ -237,13 +237,13 @@ async def rag_chat_stream_enhanced(
         # Check if this is the first message (for auto-title generation)
         is_first_message = session_data["session"]["messageCount"] == 0
         
-        # 2. Store user message
+        # 2. Store user message (session only, not in vector DB)
         if conversation_rag:
             await conversation_rag.process_message(
                 session_id=session_id,
                 message=message,
                 role="user",
-                skip_vector_store=True  # Don't store user messages in vector DB
+                skip_vector_store=True  # User messages not stored in vector DB
             )
         
         # 3. Get enhanced context (vector DB + session history)
@@ -271,13 +271,15 @@ async def rag_chat_stream_enhanced(
                         "data": json.dumps({"type": "token", "content": chunk}, ensure_ascii=False)
                     }
             
-            # 5. Store assistant response with relevance check
+            # 5. Store assistant response with relevance check (async, non-blocking)
             if conversation_rag:
-                await conversation_rag.process_message(
+                # Fire and forget - store in background without blocking response
+                import asyncio
+                asyncio.create_task(conversation_rag.process_message_async(
                     session_id=session_id,
                     message=full_response,
                     role="assistant"
-                )
+                ))
             
             # 6. Auto-generate summary if first message
             if is_first_message:
@@ -426,8 +428,7 @@ async def agent_solve_stream_enhanced(
     problem: str,
     language: str,
     max_iterations: int,
-    session_id: str,
-    enhanced_agent=None
+    session_id: str
 ) -> AsyncGenerator[dict, None]:
     """
     Agent 解题流式生成器（增强版，支持会话持久化）
@@ -437,7 +438,6 @@ async def agent_solve_stream_enhanced(
         language: 编程语言
         max_iterations: 最大迭代次数
         session_id: 会话ID
-        enhanced_agent: EnhancedAgent实例
         
     Yields:
         SSE 事件字典
@@ -461,30 +461,7 @@ async def agent_solve_stream_enhanced(
             "content": problem
         })
         
-        # 3. Get RAG context if available
-        rag_context = ""
-        if enhanced_agent and enhanced_agent.conversation_rag:
-            try:
-                rag_context = await enhanced_agent.conversation_rag.get_enhanced_context(
-                    query=problem,
-                    session_id=session_id,
-                    k=3,
-                    max_history=5
-                )
-            except Exception as e:
-                print(f"Warning: Failed to get RAG context: {e}")
-        
-        # 4. Enhance problem with context
-        if rag_context:
-            enhanced_problem = f"""{problem}
-
-[Additional Context from Knowledge Base]
-{rag_context}
-"""
-        else:
-            enhanced_problem = problem
-        
-        # 5. Get or create Agent
+        # 3. Get or create Agent
         agent = session_manager.get_or_create_agent(session_id, max_iterations)
         
         # Send start event
@@ -497,8 +474,8 @@ async def agent_solve_stream_enhanced(
             }, ensure_ascii=False)
         }
         
-        # 6. Stream execution
-        for event in agent.solve_stream(enhanced_problem, language, session_id):
+        # 4. Stream execution
+        for event in agent.solve_stream(problem, language, session_id):
             for node_name, output in event.items():
                 if node_name == "__end__":
                     continue
@@ -560,7 +537,7 @@ async def agent_solve_stream_enhanced(
         else:
             result = {"error": "未能获取最终状态"}
         
-        # 8. Store assistant response
+        # 5. Store assistant response
         conversation_session_manager.add_message(session_id, {
             "role": "assistant",
             "content": result.get("final_answer", ""),
@@ -573,7 +550,7 @@ async def agent_solve_stream_enhanced(
             }
         })
         
-        # 9. Auto-generate title if first message
+        # 6. Auto-generate title if first message
         if is_first_message:
             try:
                 # Simple title generation (first 30 chars)
@@ -673,8 +650,7 @@ async def agent_solve(request: AgentSolveRequest):
             request.problem,
             request.language,
             request.max_iterations,
-            request.session_id,
-            enhanced_agent=None  # Will be initialized in the stream function
+            request.session_id
         ),
         media_type="text/event-stream"
     )

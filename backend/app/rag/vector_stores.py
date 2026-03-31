@@ -153,6 +153,29 @@ class VectorStoreService(object):
 
         return total_chunks
 
+    def add_texts(self, texts: List[str], metadatas: List[dict] = None) -> None:
+        """
+        将文本添加到向量数据库
+
+        Args:
+            texts: 文本列表
+            metadatas: 元数据列表
+        """
+        self.vector_store.add_texts(texts, metadatas)
+
+    def similarity_search_with_score(self, query: str, k: int = 3) -> List[tuple]:
+        """
+        相似度搜索并返回分数
+
+        Args:
+            query: 查询文本
+            k: 返回结果数量
+
+        Returns:
+            (文档, 分数) 元组列表
+        """
+        return self.vector_store.similarity_search_with_score(query, k=k)
+
     def test_retrieval(self, query: str = "动态规划", top_k: int = 3) -> None:
         """
         测试知识库检索功能

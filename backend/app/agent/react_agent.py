@@ -21,13 +21,14 @@ class AlgoMateAgent:
     AlgoMate ReAct Agent实现
     """
     
-    def __init__(self, llm=None, max_iterations: int = 5):
+    def __init__(self, llm=None, max_iterations: int = 5, vector_store=None):
         """
         初始化Agent
 
         Args:
             llm: LangChain语言模型，默认使用配置中的模型
             max_iterations: 最大代码修复迭代次数
+            vector_store: 向量数据库实例，用于检索历史问答
         """
         # 初始化语言模型
         if llm is None:
@@ -36,7 +37,8 @@ class AlgoMateAgent:
             self.llm = llm
         
         self.max_iterations = max_iterations
-        self.nodes = AgentNodes(self.llm)
+        self.vector_store = vector_store
+        self.nodes = AgentNodes(self.llm, vector_store=vector_store)
         
         # 构建工作流图
         self.graph = self._build_graph()

@@ -82,7 +82,16 @@ class SessionManager:
         
         # 如果 agent 不存在或配置不同，则创建新的
         if session.get("agent") is None:
-            session["agent"] = AlgoMateAgent(max_iterations=max_iterations)
+            # 从 RAG service 获取 vector_store 用于检索历史问答
+            vector_store = None
+            rag_service = session.get("rag")
+            if rag_service:
+                vector_store = getattr(rag_service, 'vector_service', None)
+            
+            session["agent"] = AlgoMateAgent(
+                max_iterations=max_iterations,
+                vector_store=vector_store
+            )
         
         return session["agent"]
 

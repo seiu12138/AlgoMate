@@ -29,9 +29,24 @@ import logging
 class AgentNodes:
     """Agent 节点集合"""
 
-    def __init__(self, llm):
+    def __init__(self, llm, vector_store=None):
         self.llm = llm
+        self.vector_store = vector_store
         self.code_executor = CodeExecutor(timeout=5)
+    
+    def _format_retrieved_context(self, docs) -> str:
+        """格式化检索到的文档为上下文字符串"""
+        if not docs:
+            return ""
+        
+        context_parts = ["## 相关历史问答:\n"]
+        for i, doc in enumerate(docs, 1):
+            content = doc.page_content if hasattr(doc, 'page_content') else str(doc)
+            source = getattr(doc, 'metadata', {}).get('source', 'unknown')
+            role = getattr(doc, 'metadata', {}).get('role', 'unknown')
+            context_parts.append(f"[{i}] {role}: {content[:300]}{'...' if len(content) > 300 else ''}\n")
+        
+        return "\n".join(context_parts)
     
     def analyze_problem(self, state: AgentState) -> Dict[str, Any]:
         """
@@ -45,11 +60,34 @@ class AgentNodes:
         """
         log_node("analyze_problem", "开始分析题目")
         
+        # Retrieve relevant historical Q&A from vector DB
+        retrieved_context = ""
+        if self.vector_store:
+            try:
+                retriever = self.vector_store.get_retriever()
+                similar_docs = retriever.invoke(state["problem_description"])
+                retrieved_context = self._format_retrieved_context(similar_docs)
+                if retrieved_context:
+                    log_node("analyze_problem", f"检索到 {len(similar_docs)} 条相关历史问答")
+            except Exception as e:
+                log_node("analyze_problem", f"向量检索失败: {e}", level=logging.WARNING)
+        
+        # Combine problem description with retrieved context
+        problem_with_context = state["problem_description"]
+        if retrieved_context:
+            problem_with_context = f"""{retrieved_context}
+
+---
+
+当前题目:
+{state["problem_description"]}
+"""
+        
         prompt = ChatPromptTemplate.from_template(load_analysis_prompt())
         chain = prompt | self.llm
         
         response = chain.invoke({
-            "problem_description": state["problem_description"]
+            "problem_description": problem_with_context
         })
         
         try:
