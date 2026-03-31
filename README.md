@@ -15,8 +15,9 @@ algomate/
 │   │   ├── main.py          # FastAPI 入口
 │   │   ├── api/             # API 路由
 │   │   ├── agent/           # ReAct Agent 核心
-│   │   │   ├── react_agent.py      # 基础Agent
-│   │   │   └── enhanced_agent.py   # RAG增强Agent
+│   │   │   ├── react_agent.py      # ReAct Agent核心
+│   │   │   ├── nodes.py            # 工作流节点
+│   │   │   └── state.py            # Agent状态定义
 │   │   ├── rag/             # RAG 知识库
 │   │   │   ├── rag.py              # 基础RAG
 │   │   │   └── conversation_rag.py # 会话RAG
@@ -89,7 +90,8 @@ npm run dev
 | 💾 **会话持久化** | 自动保存对话历史，支持多会话管理 |
 | 🧠 **ReAct Agent** | 推理-行动循环，自动解决问题 |
 | 📚 **RAG 知识增强** | 向量检索 + 会话历史双重增强 |
-| 🎯 **智能存储** | LLM判断相关性，相似度过滤避免重复 |
+| 🎯 **智能存储** | 助手回复分块存入ChromaDB，支持检索 |
+| 🧠 **向量检索** | Agent分析题目时检索历史相关问答 |
 | 🖥️ **代码沙箱** | Python/C++/Java 安全执行环境 |
 | 🔄 **自动修复** | 代码失败自动分析修复 |
 | 🧪 **智能测试** | 自动生成边界测试用例 |
@@ -105,6 +107,7 @@ npm run dev
 - **LangChain / LangGraph** - Agent 框架
 - **ChromaDB** - 向量数据库
 - **DashScope** - 通义千问模型
+- **ChromaDB** - 向量数据库存储问答知识
 - **文件存储** - JSON 文件会话持久化
 
 ### 前端
