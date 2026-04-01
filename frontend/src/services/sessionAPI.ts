@@ -5,15 +5,19 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 // Track backend availability to prevent repeated failed requests
 let isBackendAvailable = true;
 let lastBackendCheck = 0;
-const BACKEND_CHECK_INTERVAL = 5000; // 5 seconds
+const BACKEND_CHECK_INTERVAL = 5000; // 5 seconds when available
+const BACKEND_RETRY_INTERVAL = 1000; // 1 second when unavailable (faster retry)
+let retryAttempt = 0;
+const MAX_RETRY_INTERVAL = 10000; // Max 10 seconds
 
 async function checkBackendAvailability(): Promise<boolean> {
     const now = Date.now();
-    if (now - lastBackendCheck < BACKEND_CHECK_INTERVAL) {
+    const cacheInterval = isBackendAvailable ? BACKEND_CHECK_INTERVAL : Math.min(BACKEND_RETRY_INTERVAL * (2 ** retryAttempt), MAX_RETRY_INTERVAL);
+    
+    if (now - lastBackendCheck < cacheInterval) {
         return isBackendAvailable;
     }
     
-    lastBackendCheck = now;
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -24,10 +28,36 @@ async function checkBackendAvailability(): Promise<boolean> {
         });
         
         clearTimeout(timeoutId);
+        
+        const wasAvailable = isBackendAvailable;
         isBackendAvailable = response.ok;
+        lastBackendCheck = now;
+        
+        // Reset retry counter on success
+        if (isBackendAvailable) {
+            retryAttempt = 0;
+        } else {
+            retryAttempt = Math.min(retryAttempt + 1, 5); // Cap at 5 (32 seconds)
+        }
+        
+        // Log state change
+        if (!wasAvailable && isBackendAvailable) {
+            console.log("[sessionAPI] Backend is now available");
+        } else if (wasAvailable && !isBackendAvailable) {
+            console.warn("[sessionAPI] Backend became unavailable");
+        }
+        
         return isBackendAvailable;
     } catch {
+        const wasAvailable = isBackendAvailable;
         isBackendAvailable = false;
+        lastBackendCheck = now;
+        retryAttempt = Math.min(retryAttempt + 1, 5);
+        
+        if (wasAvailable) {
+            console.warn("[sessionAPI] Backend became unavailable");
+        }
+        
         return false;
     }
 }
