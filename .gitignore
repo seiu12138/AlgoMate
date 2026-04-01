@@ -43,10 +43,24 @@ logs/*.log
 logs/**/*.log
 *.log
 
-# Data files
-backend/app/data/chat_history/
-backend/app/data/chromd_db/
-!backend/app/data/knowledge_base/.gitkeep
+# Data directories (user generated content)
+data/
+backend/data/
+backend/app/data/
+**/data/chat_history/
+**/data/chroma_db/
+**/data/chromadb/
+**/data/vector_db/
+**/data/db/
+
+# History files
+**/history/
+**/*_history/
+*.history
+
+# Keep directory structure with .gitkeep
+!.gitkeep
+!**/.gitkeep
 
 # Frontend
 frontend/node_modules/
