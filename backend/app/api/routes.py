@@ -13,6 +13,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from .schemas import (
     RAGChatRequest,
+    EnhancedRAGChatRequest,
     AgentSolveRequest,
     SessionClearRequest,
     CreateSessionRequest,
@@ -330,6 +331,126 @@ async def rag_chat_stream_enhanced(
             "event": "message",
             "data": json.dumps({"type": "error", "message": str(e), "detail": error_msg}, ensure_ascii=False)
         }
+
+
+# ============ Enhanced RAG 问答（带来源追踪） ============
+async def enhanced_rag_chat_stream(
+    message: str,
+    session_id: str,
+    enable_web_search: bool = True,
+    enable_source_tagging: bool = True
+) -> AsyncGenerator[dict, None]:
+    """
+    增强RAG聊天流式生成器（带来源追踪和网页搜索）
+    
+    Args:
+        message: 用户消息
+        session_id: 会话ID
+        enable_web_search: 是否启用网页搜索
+        enable_source_tagging: 是否启用来源标注
+        
+    Yields:
+        SSE 事件字典，包含 source_info, token, done 等类型
+    """
+    try:
+        # 1. Validate session exists
+        session_data = conversation_session_manager.get_session(session_id)
+        if not session_data:
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "error", "message": "Session not found"}, ensure_ascii=False)
+            }
+            return
+        
+        # 2. Import EnhancedRAGService
+        from app.rag.enhanced_rag import get_enhanced_rag_service
+        
+        # 3. Get or create enhanced RAG service
+        try:
+            enhanced_rag = get_enhanced_rag_service()
+        except Exception as e:
+            yield {
+                "event": "message",
+                "data": json.dumps({"type": "error", "message": f"Failed to initialize RAG service: {str(e)}"}, ensure_ascii=False)
+            }
+            return
+        
+        # 4. Stream chat with source tracking
+        async for event in enhanced_rag.chat(
+            message=message,
+            session_id=session_id,
+            enable_web_search=enable_web_search,
+            enable_source_tagging=enable_source_tagging
+        ):
+            yield {
+                "event": "message",
+                "data": json.dumps(event, ensure_ascii=False)
+            }
+            
+    except Exception as e:
+        import traceback
+        error_msg = f"{str(e)}\n{traceback.format_exc()}"
+        yield {
+            "event": "message",
+            "data": json.dumps({"type": "error", "message": str(e), "detail": error_msg}, ensure_ascii=False)
+        }
+
+
+@router.post("/rag/chat/enhanced", tags=["RAG"])
+async def enhanced_rag_chat(request: EnhancedRAGChatRequest):
+    """
+    增强RAG问答（流式 SSE，带来源追踪和网页搜索）
+    
+    基于混合检索（本地知识库 + 网页搜索）的智能问答，支持来源标注。
+    
+    ## 功能
+    - 智能混合检索（向量DB + 网页搜索）
+    - 检索质量评估，自动决定是否需要网页搜索
+    - 来源追踪与标注（[知识库检索] / [网页检索]）
+    - 知识自动沉淀（高质量网页内容入库）
+    
+    ## 请求参数
+    - **message**: 用户问题
+    - **session_id**: 会话ID（必需）
+    - **enable_web_search**: 是否启用网页搜索，默认 true
+    - **enable_source_tagging**: 是否启用来源标注，默认 true
+    
+    ## 响应 (SSE 流)
+    - `{"type": "source_info", "sources": [...], "summary": {...}}` - 来源信息（首先发送）
+    - `{"type": "token", "content": "..."}` - 生成的文本片段
+    - `{"type": "done"}` - 完成标记
+    - `{"type": "error", "message": "..."}` - 错误信息
+    
+    ## 示例
+    ```python
+    import requests
+    
+    response = requests.post(
+        "http://localhost:8000/api/rag/chat/enhanced",
+        json={
+            "message": "什么是动态规划？",
+            "session_id": "xxx",
+            "enable_web_search": True,
+            "enable_source_tagging": True
+        },
+        stream=True
+    )
+    
+    for line in response.iter_lines():
+        if line.startswith(b"data: "):
+            data = json.loads(line[6:])
+            print(data)
+    ```
+    """
+    return EventSourceResponse(
+        enhanced_rag_chat_stream(
+            request.message,
+            request.session_id,
+            request.enable_web_search,
+            request.enable_source_tagging
+        ),
+        media_type="text/event-stream"
+    )
 
 
 @router.post("/rag/chat", tags=["RAG"])

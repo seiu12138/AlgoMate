@@ -13,6 +13,14 @@ class RAGChatRequest(BaseModel):
     session_id: str = Field(default="default", description="会话ID")
 
 
+class EnhancedRAGChatRequest(BaseModel):
+    """增强RAG聊天请求（带来源追踪）"""
+    message: str = Field(..., description="用户消息")
+    session_id: str = Field(default="default", description="会话ID")
+    enable_web_search: bool = Field(default=True, description="是否启用网页搜索")
+    enable_source_tagging: bool = Field(default=True, description="是否启用来源标注")
+
+
 class AgentSolveRequest(BaseModel):
     """Agent 解题请求"""
     problem: str = Field(..., description="题目描述")
