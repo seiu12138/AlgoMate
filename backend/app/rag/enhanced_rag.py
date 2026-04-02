@@ -21,6 +21,7 @@ from langchain_community.embeddings import DashScopeEmbeddings
 
 from app.core.session_manager import get_session_manager
 from utils.config_handler import model_conf
+from utils.prompts_loader import load_source_tagged_generation_prompt
 
 from .conversation_rag import ConversationRAG
 from .retrievers.hybrid_retriever import HybridRetriever
@@ -29,33 +30,6 @@ from .ingestion.content_cleaner import ContentCleaner
 from .ingestion.deduplicator import Deduplicator
 from .ingestion.density_checker import DensityChecker
 from .ingestion.knowledge_persister import KnowledgePersister, KnowledgeItem
-
-
-# Load source tagged generation prompt
-def load_source_tagged_prompt() -> str:
-    """Load source tagged generation prompt from file"""
-    try:
-        with open('app/prompts/source_tagged_generation_prompt.txt', 'r', encoding='utf-8') as f:
-            return f.read()
-    except FileNotFoundError:
-        # Fallback default prompt
-        return """你是一位资深的算法竞赛教练。请基于以下资料回答用户的问题。
-
-## 重要：来源标注规则
-
-在回答中，你必须明确标注内容的来源：
-
-1. **如果内容来自知识库检索**：在相关内容前标注 `[知识库检索]`
-2. **如果内容来自网页检索**：在相关内容前标注 `[网页检索]`，并在段落末尾标注 `(来源: 网页URL)`
-
-## 参考资料
-
-{context}
-
-## 用户问题
-{question}
-
-请开始回答："""
 
 
 class EnhancedRAGService:
@@ -129,7 +103,7 @@ class EnhancedRAGService:
         
         # Source tagged generation prompt
         self.source_tagged_prompt = ChatPromptTemplate.from_messages([
-            ("system", load_source_tagged_prompt()),
+            ("system", load_source_tagged_generation_prompt()),
         ])
         
         # Track async tasks
