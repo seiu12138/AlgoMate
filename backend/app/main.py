@@ -71,7 +71,8 @@ def create_app() -> FastAPI:
 ## 核心功能
 
 ### 1. RAG 模式 (知识问答)
-- 向量检索增强生成
+- **标准RAG**: 向量检索增强生成
+- **增强RAG** ⭐: 混合检索（向量DB + 网页搜索）+ 来源追踪
 - 算法知识库查询
 - 流式响应 (SSE)
 
@@ -94,7 +95,7 @@ def create_app() -> FastAPI:
 - RAG: 无限制
 - Agent: 建议 10 秒内最多 1 次请求
         """,
-        version="0.1.0",
+        version="0.2.0",
         docs_url=None,  # 禁用默认，使用自定义
         redoc_url=None,  # 禁用默认，使用自定义
         openapi_tags=tags_metadata,
@@ -167,7 +168,7 @@ async def root():
     """
     return {
         "message": "欢迎使用 AlgoMate API",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "docs": "/docs",
         "redoc": "/redoc",
         "api": "/api",
@@ -185,7 +186,7 @@ async def api_root():
     """
     return {
         "service": "AlgoMate API",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "endpoints": {
             "health": "/api/health",
             "config": "/api/config",
@@ -197,6 +198,7 @@ async def api_root():
                 "delete": "DELETE /api/sessions/{id}",
             },
             "rag_chat": "POST /api/rag/chat",
+                "rag_chat_enhanced": "POST /api/rag/chat/enhanced",
             "agent_solve": "POST /api/agent/solve",
         }
     }
