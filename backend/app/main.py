@@ -197,8 +197,7 @@ async def api_root():
                 "update": "PATCH /api/sessions/{id}",
                 "delete": "DELETE /api/sessions/{id}",
             },
-            "rag_chat": "POST /api/rag/chat",
-                "rag_chat_enhanced": "POST /api/rag/chat/enhanced",
+            "rag_chat": "POST /api/rag/chat (enhanced with source tracking)",
             "agent_solve": "POST /api/agent/solve",
         }
     }
