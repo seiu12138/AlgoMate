@@ -196,10 +196,3 @@ export interface RAGSource {
     title?: string;
 }
 
-/**
- * 增强RAG选项
- */
-export interface EnhancedRAGOptions {
-    enableWebSearch?: boolean;
-    enableSourceTagging?: boolean;
-}
