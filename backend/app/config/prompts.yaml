@@ -15,3 +15,8 @@ RAG_SYSTEM_ROLE_PROMPT: "prompts/rag_system_role_prompt.txt"
 RAG_CONTEXT_PROMPT: "prompts/rag_context_prompt.txt"
 RAG_HISTORY_PROMPT: "prompts/rag_history_prompt.txt"
 RAG_USER_PROMPT: "prompts/rag_user_prompt.txt"
+
+# RAG Enhancement Prompts
+RELEVANCE_EVAL_PROMPT: "prompts/relevance_eval_prompt.txt"
+DENSITY_EVAL_PROMPT: "prompts/density_eval_prompt.txt"
+SOURCE_TAGGED_GENERATION_PROMPT: "prompts/source_tagged_generation_prompt.txt"
