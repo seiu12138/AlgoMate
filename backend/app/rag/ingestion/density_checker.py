@@ -11,6 +11,8 @@ from typing import List, Optional, Dict, Any
 
 from langchain_core.prompts import ChatPromptTemplate
 
+from utils.prompts_loader import load_density_eval_prompt
+
 
 @dataclass
 class DensityScore:
@@ -41,53 +43,6 @@ class DensityChecker:
     - overall_score < 0.5: 低密度，丢弃
     """
     
-    # 默认评估Prompt
-    DEFAULT_PROMPT = """请评估以下算法内容的知识密度，判断是否值得存入知识库。
-
-## 评估内容
-{content}
-
-## 评估维度
-
-### 1. 信息密度 (density_score)
-- 是否包含明确的算法名称和核心思想？
-- 是否包含时间和空间复杂度分析？
-- 是否包含可运行的代码实现？
-- 代码是否有注释和解释？
-
-### 2. 结构完整度 (structure_score)
-- 是否有清晰的问题描述？
-- 是否有逐步的解题思路？
-- 是否有复杂度分析？
-- 是否有示例说明？
-
-### 3. 知识稀缺性 (scarcity_score)
-- 这是通用知识还是特定技巧？
-- 是否包含独特的见解或优化方法？
-- 是否值得长期保存和复用？
-
-### 4. 质量置信度 (quality_score)
-- 内容是否专业、准确？
-- 是否有明显的错误或误导？
-- 来源是否可靠？
-
-请以JSON格式输出：
-{{
-    "density_score": 0.0-1.0,
-    "structure_score": 0.0-1.0,
-    "scarcity_score": 0.0-1.0,
-    "quality_score": 0.0-1.0,
-    "overall_score": 0.0-1.0,
-    "should_store": true/false,
-    "reason": "评估理由",
-    "suggested_tags": ["标签1", "标签2"]
-}}
-
-判断标准:
-- overall_score >= 0.75: 推荐存储
-- 0.5 <= overall_score < 0.75: 可考虑存储但质量一般
-- overall_score < 0.5: 不建议存储"""
-    
     def __init__(
         self,
         llm=None,
@@ -109,8 +64,14 @@ class DensityChecker:
         self.min_quality_score = min_quality_score
         
         if llm:
+            # 从文件加载prompt，如失败则使用空字符串作为fallback
+            try:
+                default_prompt = load_density_eval_prompt()
+            except Exception:
+                default_prompt = ""
+            
             self.prompt_template = ChatPromptTemplate.from_messages([
-                ("system", prompt or self.DEFAULT_PROMPT),
+                ("system", prompt or default_prompt),
                 ("user", "{content}")
             ])
         else:

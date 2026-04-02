@@ -283,6 +283,72 @@ def load_rag_user_prompt():
         raise e
 
 
+def load_relevance_eval_prompt():
+    """
+    加载检索质量评估prompt
+
+    Returns:
+        RELEVANCE_EVAL_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RELEVANCE_EVAL_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RELEVANCE_EVAL_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RELEVANCE_EVAL_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_density_eval_prompt():
+    """
+    加载知识密度评估prompt
+
+    Returns:
+        DENSITY_EVAL_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["DENSITY_EVAL_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到DENSITY_EVAL_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载DENSITY_EVAL_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_source_tagged_generation_prompt():
+    """
+    加载来源标注生成prompt
+
+    Returns:
+        SOURCE_TAGGED_GENERATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["SOURCE_TAGGED_GENERATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到SOURCE_TAGGED_GENERATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载SOURCE_TAGGED_GENERATION_PROMPT出错: {str(e)}")
+        raise e
+
+
 # 便捷函数：加载所有prompts
 def load_all_prompts():
     """
@@ -303,6 +369,9 @@ def load_all_prompts():
         "RAG_CONTEXT_PROMPT": load_rag_context_prompt(),
         "RAG_HISTORY_PROMPT": load_rag_history_prompt(),
         "RAG_USER_PROMPT": load_rag_user_prompt(),
+        "RELEVANCE_EVAL_PROMPT": load_relevance_eval_prompt(),
+        "DENSITY_EVAL_PROMPT": load_density_eval_prompt(),
+        "SOURCE_TAGGED_GENERATION_PROMPT": load_source_tagged_generation_prompt(),
     }
 
 

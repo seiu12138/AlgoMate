@@ -11,6 +11,8 @@ from typing import List, Optional
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 
+from utils.prompts_loader import load_relevance_eval_prompt
+
 
 @dataclass
 class RetrievalEvaluation:
@@ -42,39 +44,6 @@ class RelevanceEvaluator:
     - score < 0.4: 严重依赖网页搜索
     """
     
-    # 默认评估Prompt
-    DEFAULT_PROMPT = """请评估以下检索结果是否足够回答用户的问题。
-
-## 用户问题
-{question}
-
-## 检索结果
-{retrieved_documents}
-
-请从以下维度评估：
-1. 覆盖率 (coverage_score): 检索结果是否覆盖了问题的主要知识点？
-   - 1.0: 完全覆盖，包含所有必要信息
-   - 0.5: 部分覆盖，缺少一些细节
-   - 0.0: 几乎无关
-
-2. 相关性 (relevance_score): 检索结果与问题的相关程度？
-   - 1.0: 高度相关，直接回答问题
-   - 0.5: 有一定关联，但需要推断
-   - 0.0: 完全不相关
-
-3. 是否需要网页搜索 (needs_web_search):
-   - true: 本地知识不足，需要搜索补充
-   - false: 本地知识足够
-
-请以JSON格式输出：
-{{
-    "coverage_score": 0.0-1.0,
-    "relevance_score": 0.0-1.0,
-    "overall_score": 0.0-1.0,
-    "needs_web_search": true/false,
-    "reason": "评估理由，说明为什么需要或不需要网页搜索"
-}}"""
-    
     def __init__(
         self,
         llm,
@@ -92,8 +61,14 @@ class RelevanceEvaluator:
             web_search_threshold: 触发网页搜索的阈值
         """
         self.llm = llm
+        # 从文件加载prompt，如失败则使用空字符串作为fallback
+        try:
+            default_prompt = load_relevance_eval_prompt()
+        except Exception:
+            default_prompt = ""
+        
         self.prompt_template = ChatPromptTemplate.from_messages([
-            ("system", prompt or self.DEFAULT_PROMPT),
+            ("system", prompt or default_prompt),
             ("user", "{question}")
         ])
         self.local_only_threshold = local_only_threshold
