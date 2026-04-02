@@ -71,3 +71,6 @@ frontend/dist-ssr/
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent Plan
+PLAN.md

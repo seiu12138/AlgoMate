@@ -1,23 +1,52 @@
+/**
+ * 来源标记内容组件
+ * 
+ * 解析并渲染带有来源标记的 Markdown 内容。
+ * 支持将不同来源的内容分段展示，带有视觉区分。
+ * 
+ * 格式：
+ * - [知识库检索] 内容...
+ * - [网页检索] 内容... (来源: URL)
+ * 
+ * @example
+ * ```tsx
+ * <SourceTaggedContent content="[知识库检索] 动态规划是一种..." />
+ * ```
+ */
+
 import { Database, Globe, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CodeBlock } from "./CodeBlock";
 
+/** 来源段落接口 */
 export interface SourceSegment {
+    /** 来源类型 */
     source_type: "vector_db" | "web_search";
+    /** 内容 */
     content: string;
+    /** 来源URL */
     url?: string;
+    /** 来源标题 */
     title?: string;
 }
 
+/** 来源标记内容属性 */
 interface SourceTaggedContentProps {
+    /** 带来源标记的原始内容 */
     content: string;
 }
 
 /**
  * 解析带有来源标记的内容
- * 格式：[知识库检索] 内容...
- * 或：[网页检索] 内容... (来源: URL)
+ * 
+ * 从文本中提取来源标记，分割成多个段落。
+ * 支持以下格式：
+ * - [知识库检索] 内容...
+ * - [网页检索] 内容... (来源: URL)
+ * 
+ * @param content - 带来源标记的原始内容
+ * @returns 分段后的内容数组
  */
 export function parseSourceSegments(content: string): SourceSegment[] {
     const segments: SourceSegment[] = [];
@@ -62,6 +91,13 @@ export function parseSourceSegments(content: string): SourceSegment[] {
     return segments;
 }
 
+/**
+ * 来源标记内容组件
+ * 
+ * 渲染带有来源标记的 Markdown 内容，每个来源段落有独立的样式。
+ * 
+ * @param content - 带来源标记的原始内容
+ */
 export function SourceTaggedContent({ content }: SourceTaggedContentProps) {
     const segments = parseSourceSegments(content);
 
@@ -74,10 +110,19 @@ export function SourceTaggedContent({ content }: SourceTaggedContentProps) {
     );
 }
 
+/** 来源段落块属性 */
 interface SourceSegmentBlockProps {
     segment: SourceSegment;
 }
 
+/**
+ * 单个来源段落块
+ * 
+ * 渲染单个来源段落，包括来源标记和 Markdown 内容。
+ * 根据来源类型显示不同的视觉样式。
+ * 
+ * @param segment - 来源段落数据
+ */
 function SourceSegmentBlock({ segment }: SourceSegmentBlockProps) {
     const isVectorDB = segment.source_type === "vector_db";
 
