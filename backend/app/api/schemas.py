@@ -121,3 +121,29 @@ class UpdateSessionRequest(BaseModel):
 class SummaryResponse(BaseModel):
     """生成摘要响应"""
     title: str = Field(..., description="生成的标题")
+
+
+# ============ Enhanced RAG Models ============
+
+class SourceInfo(BaseModel):
+    """来源信息"""
+    type: Literal["vector_db", "web_search"] = Field(..., description="来源类型")
+    url: Optional[str] = Field(default=None, description="来源URL（网页搜索时）")
+    title: Optional[str] = Field(default=None, description="来源标题")
+    score: Optional[float] = Field(default=None, description="相关度分数")
+    doc_id: Optional[str] = Field(default=None, description="文档ID（知识库时）")
+
+
+class SourceSummary(BaseModel):
+    """来源检索摘要"""
+    vector_db_count: int = Field(default=0, description="知识库结果数量")
+    web_search_count: int = Field(default=0, description="网页搜索结果数量")
+    evaluation_score: Optional[float] = Field(default=None, description="检索质量评分")
+    needs_web_search: bool = Field(default=False, description="是否触发了网页搜索")
+
+
+class SSESourceInfo(SSEMessage):
+    """SSE 来源信息消息"""
+    type: Literal["source_info"] = "source_info"
+    sources: List[SourceInfo] = Field(default_factory=list, description="来源列表")
+    summary: SourceSummary = Field(default_factory=SourceSummary, description="检索摘要")
