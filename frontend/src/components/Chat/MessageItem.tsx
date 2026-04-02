@@ -5,6 +5,8 @@ import type { Message } from "../../types";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionResult } from "./ExecutionResult";
 import { ExecutionHistory } from "./ExecutionHistory";
+import { SourceTaggedContent, parseSourceSegments } from "./SourceTaggedContent";
+import { SourceList } from "./SourceBadges";
 
 interface MessageItemProps {
     message: Message;
@@ -13,6 +15,12 @@ interface MessageItemProps {
 export function MessageItem({ message }: MessageItemProps) {
     const isUser = message.role === "user";
     const { agentResult } = message;
+    
+    // Check if content has source tags
+    const hasSourceTags = !isUser && (
+        message.content.includes("[知识库检索]") || 
+        message.content.includes("[网页检索]")
+    );
 
     return (
         <div className={`flex gap-4 ${isUser ? "flex-row-reverse" : ""} animate-fade-in`}>
@@ -31,8 +39,11 @@ export function MessageItem({ message }: MessageItemProps) {
 
             {/* 消息内容 */}
             <div className={`flex-1 max-w-[85%] ${isUser ? "message-user" : "message-ai"} p-4`}>
-                {/* Markdown 内容 */}
+                {/* 来源标记内容 或 普通 Markdown */}
                 <div className="markdown-body">
+                    {hasSourceTags ? (
+                        <SourceTaggedContent content={message.content} />
+                    ) : (
                     <ReactMarkdown
                         remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
                         components={{
@@ -220,6 +231,7 @@ export function MessageItem({ message }: MessageItemProps) {
                     >
                         {message.content}
                     </ReactMarkdown>
+                    )}
                 </div>
 
                 {/* Agent 结果 */}

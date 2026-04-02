@@ -4,7 +4,7 @@ import { useChatStore } from "../../stores/chatStore";
 import { useConfigStore } from "../../stores/configStore";
 import { streamRAGChat } from "../../api/rag";
 import { streamAgentChat } from "../../api/agent";
-import type { Message, AgentResult } from "../../types";
+import type { Message, AgentResult, SourceInfo, SourceSummary } from "../../types";
 
 export function ChatInput() {
     const [input, setInput] = useState("");
@@ -65,11 +65,22 @@ export function ChatInput() {
                 // RAG streaming response
                 let fullContent = "";
                 let titleUpdated = false;
+                let sources: SourceInfo[] | undefined;
+                let summary: SourceSummary | undefined;
+                
                 for await (const event of streamRAGChat(userMessage.content, sessionId!)) {
                     console.log("[ChatInput] RAG event:", event.type);
                     if (event.type === "token") {
                         fullContent += event.content;
                         updateLastMessage(fullContent);
+                    } else if (event.type === "source_info") {
+                        // Store source information
+                        sources = event.sources;
+                        summary = event.summary;
+                        console.log("[ChatInput] Received source_info:", {
+                            sources: sources?.length,
+                            summary
+                        });
                     } else if (event.type === "title_update") {
                         console.log("[ChatInput] Received title_update:", event.title);
                         titleUpdated = true;
