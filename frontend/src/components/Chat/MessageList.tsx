@@ -112,7 +112,7 @@ export function MessageList() {
     return (
         <div className="space-y-6 relative">
             {messages.map((message) => (
-                <MessageItem key={message.id} message={message} />
+                <MessageItem key={message.id} message={message} sources={message.sources} />
             ))}
 
             {/* 加载状态 */}

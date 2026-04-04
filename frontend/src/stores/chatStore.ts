@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Message, Mode, ConversationSession } from "../types";
+import type { Message, Mode, ConversationSession, SourceInfo } from "../types";
 import { sessionAPI } from "../services/sessionAPI";
 
 interface ChatState {
@@ -22,6 +22,7 @@ interface ChatState {
     setLoading: (loading: boolean) => void;
     updateLastMessage: (content: string) => void;
     updateLastMessageAgentResult: (agentResult: Message['agentResult']) => void;
+    updateLastMessageSources: (sources: SourceInfo[]) => void;
     setAgentProgress: (progress: number) => void;
     setAgentStatus: (status: string) => void;
     
@@ -65,6 +66,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const messages = [...state.messages];
             if (messages.length > 0 && messages[messages.length - 1].role === "assistant") {
                 messages[messages.length - 1].agentResult = agentResult;
+            }
+            return { messages };
+        }),
+    updateLastMessageSources: (sources) =>
+        set((state) => {
+            const messages = [...state.messages];
+            if (messages.length > 0 && messages[messages.length - 1].role === "assistant") {
+                messages[messages.length - 1].sources = sources;
             }
             return { messages };
         }),

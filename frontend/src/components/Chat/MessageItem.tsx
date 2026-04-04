@@ -1,26 +1,30 @@
-import { User, Bot, CheckCircle } from "lucide-react";
+import { User, Bot, CheckCircle, Globe, ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Message } from "../../types";
 import { CodeBlock } from "./CodeBlock";
 import { ExecutionResult } from "./ExecutionResult";
 import { ExecutionHistory } from "./ExecutionHistory";
-import { SourceTaggedContent, parseSourceSegments } from "./SourceTaggedContent";
-import { SourceList } from "./SourceBadges";
+import { SourceTaggedContent } from "./SourceTaggedContent";
 
 interface MessageItemProps {
     message: Message;
+    sources?: import("./SourceBadges").Source[];
 }
 
-export function MessageItem({ message }: MessageItemProps) {
+export function MessageItem({ message, sources }: MessageItemProps) {
     const isUser = message.role === "user";
     const { agentResult } = message;
     
-    // Check if content has source tags
-    const hasSourceTags = !isUser && (
-        message.content.includes("[知识库检索]") || 
-        message.content.includes("[网页检索]")
-    );
+    // Check if content has citation numbers [1][2]...
+    const hasCitations = !isUser && /\[\d+\]/.test(message.content);
+    
+    // 获取网页来源的 URL 列表
+    const webUrls = sources?.filter(s => s.type === "web_search" && s.url).map(s => ({ 
+        index: s.index, 
+        url: s.url!, 
+        title: s.title 
+    })) || [];
 
     return (
         <div className={`flex gap-4 ${isUser ? "flex-row-reverse" : ""} animate-fade-in`}>
@@ -39,10 +43,38 @@ export function MessageItem({ message }: MessageItemProps) {
 
             {/* 消息内容 */}
             <div className={`flex-1 max-w-[85%] ${isUser ? "message-user" : "message-ai"} p-4`}>
+                {/* 网页来源 URL 列表（放在开头） */}
+                {webUrls.length > 0 && (
+                    <div className="mb-3 p-2 bg-purple-50 rounded border border-purple-100">
+                        <div className="flex items-center gap-1 text-xs text-purple-700 mb-1">
+                            <Globe className="w-3 h-3" />
+                            <span>网页来源：</span>
+                        </div>
+                        <div className="space-y-1">
+                            {webUrls.map(({ index, url, title }) => (
+                                <a
+                                    key={index}
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 hover:underline truncate"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center bg-purple-200 text-purple-700 rounded text-[10px]">
+                                        {index}
+                                    </span>
+                                    <span className="truncate">{title || url}</span>
+                                    <ExternalLink className="w-2.5 h-2.5 flex-shrink-0" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
                 {/* 来源标记内容 或 普通 Markdown */}
                 <div className="markdown-body">
-                    {hasSourceTags ? (
-                        <SourceTaggedContent content={message.content} />
+                    {hasCitations ? (
+                        <SourceTaggedContent content={message.content} sources={sources} />
                     ) : (
                     <ReactMarkdown
                         remarkPlugins={[[remarkGfm, { singleTilde: false }]]}

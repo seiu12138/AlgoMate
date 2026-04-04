@@ -21,6 +21,7 @@ export interface Message {
     role: "user" | "assistant";
     content: string;
     agentResult?: AgentResult;
+    sources?: SourceInfo[];  // 引用来源信息
     timestamp: number;
 }
 
@@ -103,13 +104,14 @@ export interface TitleUpdateEvent {
 }
 
 /**
- * 来源信息
+ * 来源信息（编号引用格式）
  */
 export interface SourceInfo {
+    index: number;          // 编号 [1], [2]...
     type: SourceType;
+    title: string;
     url?: string;
-    title?: string;
-    score?: number;
+    preview?: string;       // 内容预览
     doc_id?: string;
 }
 
@@ -117,10 +119,10 @@ export interface SourceInfo {
  * 检索摘要
  */
 export interface SourceSummary {
+    total_count: number;           // 参考资料总数
     vector_db_count: number;
     web_search_count: number;
-    evaluation_score?: number;
-    needs_web_search: boolean;
+    retrieval_stage?: string;      // 检索阶段
 }
 
 /**

@@ -18,6 +18,7 @@ export function ChatInput() {
         setLoading, 
         updateLastMessage,
         updateLastMessageAgentResult,
+        updateLastMessageSources,
         setAgentProgress,
         setAgentStatus,
         updateSessionTitle,
@@ -77,6 +78,10 @@ export function ChatInput() {
                         // Store source information
                         sources = event.sources;
                         summary = event.summary;
+                        // Save sources to message
+                        if (sources) {
+                            updateLastMessageSources(sources);
+                        }
                         console.log("[ChatInput] Received source_info:", {
                             sources: sources?.length,
                             summary
