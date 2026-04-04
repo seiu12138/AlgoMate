@@ -21,10 +21,13 @@ from langchain_community.embeddings import DashScopeEmbeddings
 
 from app.core.session_manager import get_session_manager
 from utils.config_handler import model_conf
-from utils.prompts_loader import load_source_tagged_generation_prompt
+from utils.prompts_loader import (
+    load_citation_generation_prompt,
+    load_direct_generation_prompt
+)
 
 from .conversation_rag import ConversationRAG
-from .retrievers.hybrid_retriever import HybridRetriever
+from .retrievers.sequential_retriever import SequentialRetriever
 from .retrievers.base import SourceTaggedDocument, RetrievalResult
 from .ingestion.content_cleaner import ContentCleaner
 from .ingestion.deduplicator import Deduplicator
@@ -81,13 +84,15 @@ class EnhancedRAGService:
         self.llm = llm
         self.session_manager = get_session_manager()
         
-        # Initialize hybrid retriever
-        self.hybrid_retriever = HybridRetriever(
+        # Initialize sequential retriever (strict priority: RAG → Web → Direct)
+        self.sequential_retriever = SequentialRetriever(
             vector_store=vector_store,
             llm=llm,
+            min_vector_results=2,  # RAG至少需要2条结果才视为充足
+            max_vector_results=5,
+            max_web_results=5,
             web_search_provider=web_search_provider,
-            web_search_api_key=web_search_api_key,
-            local_only_threshold=local_only_threshold
+            web_search_api_key=web_search_api_key
         )
         
         # Initialize conversation RAG for session persistence
@@ -102,9 +107,12 @@ class EnhancedRAGService:
             self.density_checker = DensityChecker(llm, min_density_score=min_density_score)
             self.knowledge_persister = KnowledgePersister(vector_store)
         
-        # Source tagged generation prompt
-        self.source_tagged_prompt = ChatPromptTemplate.from_messages([
-            ("system", load_source_tagged_generation_prompt()),
+        # Citation format prompt for numbered references [1][2]
+        self.citation_prompt = ChatPromptTemplate.from_messages([
+            ("system", load_citation_generation_prompt()),
+        ])
+        self.direct_prompt = ChatPromptTemplate.from_messages([
+            ("system", load_direct_generation_prompt()),
         ])
         
         # Track async tasks
@@ -134,39 +142,41 @@ class EnhancedRAGService:
             }
         """
         try:
-            # Step 1: Retrieve with source tracking
+            # Step 1: Sequential retrieval (RAG → Web → None)
             if enable_web_search:
-                retrieval_result = await self.hybrid_retriever.retrieve(message)
+                retrieval_result = await self.sequential_retriever.retrieve(message)
             else:
-                # Use vector retriever only
+                # RAG only mode
                 from .retrievers.vector_retriever import VectorRetriever
                 vector_retriever = VectorRetriever(self.vector_store)
-                retrieval_result = await vector_retriever.retrieve(message)
+                rag_result = await vector_retriever.retrieve(message)
+                # Mark as RAG stage if has results, else none
+                from dataclasses import replace
+                retrieval_result = replace(
+                    rag_result,
+                    retrieval_stage="vector_db" if rag_result.documents else "none"
+                )
             
-            # Step 2: Send source information first
-            sources_info = self._extract_sources_info(retrieval_result)
+            # Step 2: Send source information first (with citation numbers)
+            citation_sources = retrieval_result.to_citation_sources()
             yield {
                 "type": "source_info",
-                "sources": sources_info,
+                "sources": citation_sources,
                 "summary": {
+                    "total_count": len(citation_sources),
                     "vector_db_count": retrieval_result.get_vector_db_count(),
                     "web_search_count": retrieval_result.get_web_search_count(),
-                    "evaluation_score": retrieval_result.evaluation_score,
-                    "needs_web_search": retrieval_result.needs_web_search
+                    "retrieval_stage": retrieval_result.retrieval_stage
                 }
             }
             
             # Step 3: Build context with sources
             context_with_sources = retrieval_result.to_context_string()
             
-            # Step 4: Generate response
-            # 当检索结果为空时，自动禁用来源标注，避免 LLM 幻觉
-            has_retrieval_results = bool(context_with_sources and context_with_sources.strip())
-            should_use_source_tagging = enable_source_tagging and has_retrieval_results
-            
-            if should_use_source_tagging:
-                # 使用带来源标注的生成
-                chain = self.source_tagged_prompt | self.llm | StrOutputParser()
+            # Step 4: Generate response with citation format [1][2]
+            if retrieval_result.documents and enable_source_tagging:
+                # 使用编号引用格式 Prompt，让 LLM 生成 [1][2] 角标
+                chain = self.citation_prompt | self.llm | StrOutputParser()
                 full_response = ""
                 
                 async for chunk in chain.astream({
@@ -179,20 +189,13 @@ class EnhancedRAGService:
                         "content": chunk
                     }
             else:
-                # Use standard RAG without source tagging
-                enhanced_context = await self.conversation_rag.get_enhanced_context(
-                    message, session_id
-                )
-                
-                # Use existing chain
-                from .rag import RagService
-                rag_service = RagService()
+                # 无检索结果，直接询问 LLM
+                chain = self.direct_prompt | self.llm | StrOutputParser()
                 full_response = ""
                 
-                async for chunk in rag_service.chain.astream(
-                    {"input": message, "context": enhanced_context},
-                    config={"configurable": {"session_id": session_id}}
-                ):
+                async for chunk in chain.astream({
+                    "question": message
+                }):
                     full_response += chunk
                     yield {
                         "type": "token",

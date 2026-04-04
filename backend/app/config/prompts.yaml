@@ -20,3 +20,11 @@ RAG_USER_PROMPT: "prompts/rag_user_prompt.txt"
 RELEVANCE_EVAL_PROMPT: "prompts/relevance_eval_prompt.txt"
 DENSITY_EVAL_PROMPT: "prompts/density_eval_prompt.txt"
 SOURCE_TAGGED_GENERATION_PROMPT: "prompts/source_tagged_generation_prompt.txt"
+
+# Sequential RAG Prompts (for strict source control)
+RAG_GENERATION_PROMPT: "prompts/rag_generation_prompt.txt"
+WEB_GENERATION_PROMPT: "prompts/web_generation_prompt.txt"
+DIRECT_GENERATION_PROMPT: "prompts/direct_generation_prompt.txt"
+
+# Citation format Prompt (numbered references [1][2])
+CITATION_GENERATION_PROMPT: "prompts/citation_generation_prompt.txt"

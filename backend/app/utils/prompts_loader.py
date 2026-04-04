@@ -349,6 +349,94 @@ def load_source_tagged_generation_prompt():
         raise e
 
 
+def load_rag_generation_prompt():
+    """
+    加载RAG专用生成prompt
+
+    Returns:
+        RAG_GENERATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["RAG_GENERATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到RAG_GENERATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载RAG_GENERATION_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_web_generation_prompt():
+    """
+    加载网页搜索专用生成prompt
+
+    Returns:
+        WEB_GENERATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["WEB_GENERATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到WEB_GENERATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载WEB_GENERATION_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_direct_generation_prompt():
+    """
+    加载直接询问模型生成prompt（无检索结果时使用）
+
+    Returns:
+        DIRECT_GENERATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["DIRECT_GENERATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到DIRECT_GENERATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载DIRECT_GENERATION_PROMPT出错: {str(e)}")
+        raise e
+
+
+def load_citation_generation_prompt():
+    """
+    加载编号引用格式生成prompt（带[1][2]角标）
+
+    Returns:
+        CITATION_GENERATION_PROMPT的内容
+    """
+    prompts_conf = get_prompts_conf()
+    try:
+        prompt_path = _get_abs_path(prompts_conf["CITATION_GENERATION_PROMPT"])
+    except KeyError as e:
+        logger.error(f"[Prompts加载]: yaml配置项中找不到CITATION_GENERATION_PROMPT配置项")
+        raise e
+
+    try:
+        with open(prompt_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"[Prompts加载]: 加载CITATION_GENERATION_PROMPT出错: {str(e)}")
+        raise e
+
+
 # 便捷函数：加载所有prompts
 def load_all_prompts():
     """
@@ -372,6 +460,10 @@ def load_all_prompts():
         "RELEVANCE_EVAL_PROMPT": load_relevance_eval_prompt(),
         "DENSITY_EVAL_PROMPT": load_density_eval_prompt(),
         "SOURCE_TAGGED_GENERATION_PROMPT": load_source_tagged_generation_prompt(),
+        "RAG_GENERATION_PROMPT": load_rag_generation_prompt(),
+        "WEB_GENERATION_PROMPT": load_web_generation_prompt(),
+        "DIRECT_GENERATION_PROMPT": load_direct_generation_prompt(),
+        "CITATION_GENERATION_PROMPT": load_citation_generation_prompt(),
     }
 
 

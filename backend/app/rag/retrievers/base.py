@@ -116,6 +116,7 @@ class RetrievalResult:
     web_results: List[SourceTaggedDocument] = field(default_factory=list)     # 网页结果
     evaluation_score: Optional[float] = None  # 评估分数
     needs_web_search: bool = False         # 是否触发了网页搜索
+    retrieval_stage: str = "none"          # 检索阶段: "vector_db", "web_search", "none"
     
     def get_vector_db_count(self) -> int:
         """获取知识库结果数量"""
@@ -127,35 +128,64 @@ class RetrievalResult:
     
     def to_context_string(self) -> str:
         """
-        转换为完整的上下文字符串
+        转换为编号引用格式的上下文字符串
         
-        用于构建LLM Prompt的上下文部分
+        格式:
+        ## 参考资料
+        [1] 内容摘要... (来源: 知识库)
+        [2] 内容摘要... (来源: 网页 URL)
+        
+        用于构建 LLM Prompt 的上下文部分
         """
+        if not self.documents:
+            return ""
+        
         parts = []
+        parts.append("## 参考资料")
         
-        # 按来源分组
-        vector_docs = [d for d in self.documents if d.source_metadata.source_type == "vector_db"]
-        web_docs = [d for d in self.documents if d.source_metadata.source_type == "web_search"]
-        
-        if vector_docs:
-            parts.append("## [知识库检索] 相关资料")
-            for i, doc in enumerate(vector_docs, 1):
-                parts.append(f"\n### 资料 {i}")
-                parts.append(doc.page_content)
-                parts.append(f"<!-- SOURCE: {doc.get_source_tag()} -->")
-        
-        if web_docs:
-            parts.append("\n## [网页检索] 相关资料")
-            for i, doc in enumerate(web_docs, 1):
-                parts.append(f"\n### 资料 {i}")
-                if doc.source_metadata.source_title:
-                    parts.append(f"来源标题: {doc.source_metadata.source_title}")
-                if doc.source_metadata.source_url:
-                    parts.append(f"来源链接: {doc.source_metadata.source_url}")
-                parts.append(f"内容:\n{doc.page_content}")
-                parts.append(f"<!-- SOURCE: {doc.get_source_tag()} | URL: {doc.source_metadata.source_url} -->")
+        # 所有文档统一编号 [1], [2], [3]...
+        for i, doc in enumerate(self.documents, 1):
+            # 构建来源信息
+            if doc.source_metadata.source_type == "vector_db":
+                source_info = "来自本地知识库"
+            else:
+                url = doc.source_metadata.source_url or "未知来源"
+                source_info = f"来自网页 ({url})"
+            
+            # 截取内容摘要（前300字符）
+            content_preview = doc.page_content[:300].replace('\n', ' ').strip()
+            if len(doc.page_content) > 300:
+                content_preview += "..."
+            
+            # 添加标题（如果有）
+            title = doc.source_metadata.source_title or f"资料 {i}"
+            
+            parts.append(f"[{i}] {title}: {content_preview} ({source_info})")
         
         return "\n\n".join(parts)
+    
+    def to_citation_sources(self) -> List[Dict[str, Any]]:
+        """
+        转换为前端展示用的编号引用来源列表
+        
+        Returns:
+            带编号的来源信息列表，格式:
+            [
+                {index: 1, type: "vector_db", title: "...", url: "...", preview: "..."},
+                {index: 2, type: "web_search", title: "...", url: "...", preview: "..."}
+            ]
+        """
+        sources = []
+        for i, doc in enumerate(self.documents, 1):
+            sources.append({
+                "index": i,
+                "type": doc.source_metadata.source_type,
+                "title": doc.source_metadata.source_title or f"资料 {i}",
+                "url": doc.source_metadata.source_url,
+                "preview": doc.page_content[:200].replace('\n', ' ').strip(),
+                "doc_id": doc.source_metadata.doc_id
+            })
+        return sources
     
     def to_frontend_sources(self) -> List[Dict[str, Any]]:
         """转换为前端来源列表"""
