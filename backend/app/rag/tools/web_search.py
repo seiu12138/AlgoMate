@@ -125,17 +125,18 @@ class WebSearchTool:
         return results
     
     async def _search_duckduckgo(self, query: str) -> List[WebSearchResult]:
-        """使用DuckDuckGo搜索"""
+        """使用DuckDuckGo搜索 (使用新版 ddgs 库)"""
         try:
-            # 使用duckduckgo-search库
-            from duckduckgo_search import DDGS
+            # 使用新版 ddgs 库 (duckduckgo-search 的新名称)
+            from ddgs import DDGS
             
             results = []
             with DDGS() as ddgs:
+                # 新版 API 参数略有不同
                 search_results = ddgs.text(
                     query,
                     max_results=self.max_results,
-                    region="cn-zh"  # 中文结果优先
+                    region="wt-wt"  # 全球结果，无区域限制
                 )
                 
                 for r in search_results:
@@ -151,6 +152,7 @@ class WebSearchTool:
             
         except Exception as e:
             print(f"[WebSearch] DuckDuckGo search failed: {e}")
+            # 降级：返回空结果，但不影响整体流程
             return []
     
     async def _search_bing(self, query: str) -> List[WebSearchResult]:

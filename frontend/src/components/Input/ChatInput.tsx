@@ -143,7 +143,8 @@ export function ChatInput() {
             }
         } catch (error) {
             console.error("[ChatInput] Chat error:", error);
-            updateLastMessage("抱歉，发生了错误。请稍后重试。");
+            const errorMessage = error instanceof Error ? error.message : "抱歉，发生了错误。请稍后重试。";
+            updateLastMessage(`❌ 错误: ${errorMessage}`);
         } finally {
             setLoading(false);
             setAgentProgress(0);

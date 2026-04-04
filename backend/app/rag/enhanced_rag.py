@@ -91,7 +91,8 @@ class EnhancedRAGService:
         )
         
         # Initialize conversation RAG for session persistence
-        self.conversation_rag = ConversationRAG(vector_store, llm)
+        # 禁用向量存储，避免对话历史污染知识库
+        self.conversation_rag = ConversationRAG(vector_store, llm, enable_vector_storage=False)
         
         # Knowledge ingestion components
         self.enable_knowledge_ingestion = enable_knowledge_ingestion
@@ -158,8 +159,13 @@ class EnhancedRAGService:
             # Step 3: Build context with sources
             context_with_sources = retrieval_result.to_context_string()
             
-            # Step 4: Generate response with source tagging
-            if enable_source_tagging:
+            # Step 4: Generate response
+            # 当检索结果为空时，自动禁用来源标注，避免 LLM 幻觉
+            has_retrieval_results = bool(context_with_sources and context_with_sources.strip())
+            should_use_source_tagging = enable_source_tagging and has_retrieval_results
+            
+            if should_use_source_tagging:
+                # 使用带来源标注的生成
                 chain = self.source_tagged_prompt | self.llm | StrOutputParser()
                 full_response = ""
                 

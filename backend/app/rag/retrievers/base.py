@@ -48,12 +48,17 @@ class SourceTaggedDocument(Document):
         source_metadata: SourceMetadata,
         metadata: Optional[Dict[str, Any]] = None
     ):
-        # 合并元数据
+        # 合并元数据 - 将source_metadata存储在metadata字典中
         merged_metadata = metadata or {}
         merged_metadata["source_metadata"] = source_metadata.to_dict()
         
         super().__init__(page_content=page_content, metadata=merged_metadata)
-        self.source_metadata = source_metadata
+    
+    @property
+    def source_metadata(self) -> SourceMetadata:
+        """获取来源元数据"""
+        meta_dict = self.metadata.get("source_metadata", {})
+        return SourceMetadata.from_dict(meta_dict)
     
     def get_source_tag(self) -> str:
         """获取来源标记文本"""

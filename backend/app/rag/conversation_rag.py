@@ -24,7 +24,7 @@ class ConversationRAG:
     - Retrieves from both vector DB and session history
     """
     
-    def __init__(self, vector_store, llm, distance_threshold: float = 0.5, min_confidence: float = 0.3):
+    def __init__(self, vector_store, llm, distance_threshold: float = 0.5, min_confidence: float = 0.3, enable_vector_storage: bool = False):
         """
         初始化 ConversationRAG
 
@@ -39,6 +39,7 @@ class ConversationRAG:
         self.session_manager = get_session_manager()
         self.distance_threshold = distance_threshold  # L2 距离阈值
         self.min_confidence = min_confidence
+        self.enable_vector_storage = enable_vector_storage  # 是否启用向量存储
         
         # Prompt for relevance checking
         self.relevance_prompt = ChatPromptTemplate.from_messages([
@@ -176,8 +177,8 @@ Respond with ONLY a JSON object:
             "metadata": {}
         }
         
-        # 2. Store message in vector DB if not skipped
-        if not skip_vector_store:
+        # 2. Store message in vector DB if enabled and not skipped
+        if self.enable_vector_storage and not skip_vector_store:
             should_store = True
             confidence_score = 1.0
             
@@ -230,8 +231,8 @@ Respond with ONLY a JSON object:
             message: 消息内容（应为助手回复）
             role: 角色，必须为 "assistant"
         """
-        # Only store assistant messages
-        if role != "assistant":
+        # Only store assistant messages and only if vector storage is enabled
+        if role != "assistant" or not self.enable_vector_storage:
             return
         
         try:

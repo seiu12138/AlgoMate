@@ -114,10 +114,14 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[
             "http://localhost:5173",  # Vite 开发服务器
+            "http://localhost:5174",  # Vite 开发服务器
+            "http://localhost:5175",  # Vite 开发服务器
             "http://localhost:4173",  # Vite Preview 服务器
             "http://localhost:3000",  # React 开发服务器
             "http://localhost:8080",  # 其他常见前端端口
             "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+            "http://127.0.0.1:5175",
             "http://127.0.0.1:4173",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:8080",

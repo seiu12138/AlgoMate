@@ -105,8 +105,8 @@ export async function* streamRAGChat(
                             break;
                         case "done":
                         case "error":
-                            yield data;
-                            break;
+                            // 抛出错误，让调用者可以 catch 并显示给用户
+                            throw new Error(data.message || "服务器返回错误");
                     }
                 } catch (e) {
                     console.error("Failed to parse SSE data:", e);
