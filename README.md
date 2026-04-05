@@ -2,7 +2,7 @@
 
 > 前后端分离架构 | React + FastAPI | 会话持久化 | RAG增强
 
-AlgoMate 是一个基于 **LangGraph + ReAct 架构** 的智能算法辅导系统，能够自动分析算法题目、编写代码、执行测试并在出错时自主修复。支持**会话持久化**和**RAG知识增强**。
+AlgoMate 是一个基于 **LangGraph + ReAct 架构** 的智能算法辅导系统，能够自动分析算法题目、编写代码、执行测试并在出错时自主修复。支持**会话持久化**、**顺序检索增强RAG**和**编号引用来源追踪**。
 
 ---
 
@@ -19,8 +19,12 @@ algomate/
 │   │   │   ├── nodes.py            # 工作流节点
 │   │   │   └── state.py            # Agent状态定义
 │   │   ├── rag/             # RAG 知识库
-│   │   │   ├── rag.py              # 基础RAG
-│   │   │   └── conversation_rag.py # 会话RAG
+│   │   │   ├── enhanced_rag.py     # 增强RAG（顺序检索+引用追踪）
+│   │   │   ├── conversation_rag.py # 会话RAG
+│   │   │   └── retrievers/         # 检索器
+│   │   │       ├── sequential_retriever.py  # 顺序检索器
+│   │   │       ├── vector_retriever.py      # 向量检索器
+│   │   │       └── web_retriever.py         # 网页检索器
 │   │   ├── core/            # 核心模块
 │   │   │   └── session_manager.py  # 会话管理
 │   │   ├── tools/           # 代码执行沙箱
@@ -33,6 +37,8 @@ algomate/
 │   │   ├── components/      # React 组件
 │   │   │   ├── Sidebar/     # 侧边栏(含会话列表)
 │   │   │   ├── Chat/        # 聊天组件
+│   │   │   │   ├── MessageItem.tsx        # 消息展示（含来源）
+│   │   │   │   └── SourceTaggedContent.tsx # 引用渲染组件
 │   │   │   └── Input/       # 输入组件
 │   │   ├── stores/          # Zustand 状态管理
 │   │   ├── api/             # API 封装
@@ -87,16 +93,13 @@ npm run dev
 
 | 特性 | 描述 |
 |------|------|
-| 💾 **会话持久化** | 自动保存对话历史，支持多会话管理 |
-| 🧠 **ReAct Agent** | 推理-行动循环，自动解决问题 |
-| 📚 **RAG 知识增强** | 向量检索 + 会话历史双重增强 |
-| 🎯 **智能存储** | 助手回复分块存入ChromaDB，支持检索 |
-| 🧠 **向量检索** | Agent分析题目时检索历史相关问答 |
+| 🧠 **ReAct Agent** | 推理-行动循环，自动解题、编码、测试、修复 |
+| 📚 **顺序检索 RAG** | RAG → 网页搜索 → 直接LLM，严格优先级控制 |
+| 🔢 **编号引用** | 角标格式 `[1][2]` 标注来源，支持点击跳转 |
+| 🌐 **网页来源展示** | 消息顶部显示网页来源 URL 列表 |
 | 🖥️ **代码沙箱** | Python/C++/Java 安全执行环境 |
-| 🔄 **自动修复** | 代码失败自动分析修复 |
-| 🧪 **智能测试** | 自动生成边界测试用例 |
-| 💬 **流式展示** | 实时展示 Agent 思考过程 |
-| 📝 **自动标题** | 基于首条消息自动生成会话标题 |
+| 💾 **会话持久化** | 自动保存对话历史，支持多会话管理 |
+| 💬 **流式展示** | 实时展示 Agent 思考过程和生成内容 |
 
 ---
 
@@ -107,8 +110,7 @@ npm run dev
 - **LangChain / LangGraph** - Agent 框架
 - **ChromaDB** - 向量数据库
 - **DashScope** - 通义千问模型
-- **ChromaDB** - 向量数据库存储问答知识
-- **文件存储** - JSON 文件会话持久化
+- **DuckDuckGo** - 网页搜索
 
 ### 前端
 - **React 18 + TypeScript**
@@ -136,7 +138,7 @@ npm run dev
 |------|------|------|
 | `/api/health` | GET | 健康检查 |
 | `/api/config` | GET | 获取配置 |
-| `/api/rag/chat` | POST | RAG 问答 (SSE) |
+| `/api/rag/chat` | POST | RAG 问答 (SSE，带来源追踪) |
 | `/api/agent/solve` | POST | Agent 解题 (SSE) |
 | `/api/session/clear` | POST | 清空会话 |
 
@@ -170,15 +172,39 @@ data/chat_history/
 
 每个会话包含：
 - 会话元数据（ID、类型、标题、时间戳）
-- 消息历史（角色、内容、元数据）
+- 消息历史（角色、内容、元数据、来源信息）
 - 可选的Agent结果（代码、执行历史等）
+
+---
+
+## 🔍 RAG 顺序检索流程
+
+```
+用户提问
+    ↓
+[Step 1] 向量数据库检索 (RAG)
+    ↓
+结果数 >= min_vector_results(默认2)?
+    ↓ 是              ↓ 否
+返回 RAG结果    [Step 2] 网页搜索
+    [1][2]...           ↓
+                    有结果?
+                        ↓ 是      ↓ 否
+                    返回网页结果   直接询问LLM
+                    [1][2]...    (无引用)
+```
+
+**特点：**
+- 严格控制来源，不会混合 RAG 和网页结果
+- 使用编号引用 `[1]`, `[2]` 标注来源
+- 网页来源在消息顶部显示可点击的 URL 列表
 
 ---
 
 ## 📄 相关文档
 
-- [会话持久化规范](./CONVERSATION_PERSISTENCE_SPEC.md) - 会话系统详细设计
-- [后端文档](./backend/README.md) - 后端启动和 API 说明
+- [API 文档](./API.md) - 详细 API 说明
+- [后端文档](./backend/README.md) - 后端启动和开发说明
 - [前端文档](./frontend/README.md) - 前端开发说明
 
 ---
